@@ -14,13 +14,16 @@ Basic Echobot example, repeats messages.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-
+from consts import *
 import logging
 import os
 
-from telegram import ForceReply, Update
+from telegram import ForceReply, Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from dotenv import load_dotenv
+
+language_list = [["/set_src italian", "English"], ["LIS", "ASL"]]
+markup = ReplyKeyboardMarkup(language_list, one_time_keyboard=True)
 
 load_dotenv()
 
@@ -46,23 +49,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ForceReply(selective=True),
     )
 
-
-# Define a few command handlers. These usually take the two arguments update and
-# context.
-async def bye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /start is issued."""
-    user = update.effective_user
-    message = update.message
-    await update.message.reply_html(
-        rf"Hi {user.mention_html()}! You wrote {message.text}",
-        reply_markup=ForceReply(selective=True),
-    )
-
-
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    await update.message.reply_text("Bella Ila!")
+    await update.message.reply_text(HELP_MESSAGE)
 
+async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    print(context.user_data)
+    await update.message.reply_text(
+        SRC_COMMAND_MESSAGE,
+        reply_markup=markup
+    )
+    
+async def dest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await None
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
@@ -77,7 +76,7 @@ def main() -> None:
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("bye", bye))
+    application.add_handler(CommandHandler("src", src_command))
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
