@@ -17,13 +17,13 @@ bot.
 from consts import *
 import logging
 import os
+import numpy as np
+import json
+import emoji
 
-from telegram import ForceReply, Update, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram import ForceReply, Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 from dotenv import load_dotenv
-
-language_list = [["/set_src italian", "English"], ["LIS", "ASL"]]
-markup = ReplyKeyboardMarkup(language_list, one_time_keyboard=True)
 
 load_dotenv()
 
@@ -38,6 +38,15 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+def my_update_dict(dict: dict, key, value):
+    dict.update({key:value})
+    return dict
+
+
+def inline_keyboard_builder(is_src: bool, make_selected=0) -> InlineKeyboardMarkup:
+    language_keyboard = np.array([InlineKeyboardButton(lang, callback_data=json.dumps(my_update_dict(data, "task", TASKS[int(is_src)]))) for lang, data in KEYBOARD_LANG_DICT.items()])
+    language_keyboard = language_keyboard.reshape(2,-1).tolist()
+    return InlineKeyboardMarkup(language_keyboard)
 
 # Define a few command handlers. These usually take the two arguments update and
 # context.
@@ -54,10 +63,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(HELP_MESSAGE)
 
 async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    print(context.user_data)
     await update.message.reply_text(
         SRC_COMMAND_MESSAGE,
-        reply_markup=markup
+        reply_markup=inline_keyboard_builder(True)
     )
     
 async def dest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -67,6 +75,37 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
     await update.message.reply_text(update.message.text)
 
+async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, data:dict) -> None:
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(f"Src: {data['lang']}, select now the destination:", reply_markup=inline_keyboard_builder(is_src = False))
+
+async def select_language_dst_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, data:dict) -> None:
+    query = update.callback_query
+    print()
+    print(update)
+    print()
+    print()
+    await query.answer()
+    await query.edit_message_text(f"Ciao")
+
+async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    #if query.data == "Disabled":
+
+    print()
+    print()
+    print(query.data)
+    print()
+    print()
+    data = json.loads(query.data)
+
+    if data["task"] ==  "SELECT_LANGUAGE_SRC":
+        await select_language_src_handler(update, context, data)
+    elif data["task"] == "SELECT_LANGUAGE_DST":
+        await select_language_dst_handler(update, context, data)
+    
+    
 
 def main() -> None:
     """Start the bot."""
@@ -77,6 +116,7 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("src", src_command))
+    application.add_handler(CallbackQueryHandler(query_handler))
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
