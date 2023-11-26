@@ -44,8 +44,18 @@ def my_update_dict(dict: dict, key, value):
 
 
 def inline_keyboard_builder(is_src: bool, make_selected=0) -> InlineKeyboardMarkup:
-    language_keyboard = np.array([InlineKeyboardButton(lang, callback_data=json.dumps(my_update_dict(data, "task", TASKS[int(is_src)]))) for lang, data in KEYBOARD_LANG_DICT.items()])
-    language_keyboard = language_keyboard.reshape(2,-1).tolist()
+
+    language_keyboard = np.array(
+        [
+            InlineKeyboardButton(
+                lang, 
+                callback_data=lang,
+            ) for lang in KEYBOARD_LANG_LIST
+        ]
+    )
+
+    language_keyboard = language_keyboard.reshape(-1, NUM_LANGS_PER_ROW).tolist()
+    
     return InlineKeyboardMarkup(language_keyboard)
 
 # Define a few command handlers. These usually take the two arguments update and
@@ -63,9 +73,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(HELP_MESSAGE)
 
 async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    keyboard = inline_keyboard_builder(True)
+    
     await update.message.reply_text(
         SRC_COMMAND_MESSAGE,
-        reply_markup=inline_keyboard_builder(True)
+        reply_markup=keyboard
     )
     
 async def dest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -78,7 +90,10 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, data:dict) -> None:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(f"Src: {data['lang']}, select now the destination:", reply_markup=inline_keyboard_builder(is_src = False))
+    await query.edit_message_text(
+        f"Selected source language: {data['lang']}\nNow select the destination:", 
+        reply_markup=inline_keyboard_builder(is_src = False)
+    )
 
 async def select_language_dst_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, data:dict) -> None:
     query = update.callback_query
