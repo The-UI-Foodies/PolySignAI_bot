@@ -58,6 +58,18 @@ def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
     context.user_data["task_in_progress_msg_id"] = None
     context.user_data["task_in_progress_error_raised_msg_list"] = []
 
+async def __print_src_or_dst_command(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, direction_key: str, direction: str
+):
+    
+    if direction_key in context.user_data:
+        await update.message.reply_text(f"Selected {direction} language: {context.user_data[direction_key]}")
+    
+    else:
+        await update.message.reply_text(
+            f"No {direction} language selected yet.\nUse /src command to set the {direction} language"
+        )
+
 
 # Define a few command handlers. These usually take the two arguments update and
 # context.
@@ -124,13 +136,7 @@ async def select_language_src_handler(update: Update, context: ContextTypes.DEFA
 
 async def print_src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if "src_lang" in context.user_data:
-        await update.message.reply_text(f"Selected source language: {context.user_data['src_lang']}")
-    
-    else:
-        await update.message.reply_text(
-            f"No source language selected yet.\nUse /src command to set the source language"
-        )
+    await __print_src_or_dst_command(update=update, context=context, direction_key=SRC_LANG, direction=SRC)
 
 ### --- src --- ###
 
@@ -183,19 +189,20 @@ async def select_language_dst_handler(update: Update, context: ContextTypes.DEFA
 
 async def print_dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if "dst_lang" in context.user_data:
-        await update.message.reply_text(f"Selected destination language: {context.user_data['dst_lang']}")
-    
-    else:
-        await update.message.reply_text(
-            f"No destination language selected yet.\nUse /dst command to set the destination language"
-        )
+    await __print_src_or_dst_command(
+        update=update, context=context, direction_key=DST_LANG, direction=DST
+    )
 
 ### --- dst --- ###
 
 ### --- src and dst --- ##
 
-# TODO
+# TODO set src AND dst together
+
+async def print_src_and_dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    await __print_src_or_dst_command(update=update, context=context, direction_key=SRC_LANG, direction=SRC)
+    await __print_src_or_dst_command(update=update, context=context, direction_key=DST_LANG, direction=DST)
 
 ### --- src and dst --- ##
 
@@ -273,6 +280,7 @@ def main() -> None:
     application.add_handler(CommandHandler("swap", swap_command))
     application.add_handler(CommandHandler("langsrc", print_src_command))
     application.add_handler(CommandHandler("langdst", print_dst_command))
+    application.add_handler(CommandHandler("lang", print_src_and_dst_command))
     application.add_handler(CallbackQueryHandler(query_handler))
 
     # on non command i.e message - echo the message on Telegram

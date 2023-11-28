@@ -29,6 +29,12 @@ OPEN_HANDS_EMOJI = "\U0001f450"
 SRC_LANG_SELECTION_TASK = "Source language selection"
 DST_LANG_SELECTION_TASK = "Destination language selection"
 
+SRC_LANG = "src_lang"
+SRC = "source"
+
+DST_LANG = "dst_lang"
+DST = "destination"
+
 KEYBOARD_LANG_LIST = [
     f"Italian {ITALIAN_FLAG_EMOJI}", 
     f"English {ENGLISH_FLAG_EMOJI}",
