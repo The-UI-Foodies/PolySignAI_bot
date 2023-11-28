@@ -115,6 +115,10 @@ async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     )
     context.user_data["task_in_progress_msg_id"] = msg.message_id
 
+async def __clear_msgs(context: ContextTypes.DEFAULT_TYPE) -> None:
+    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
+        await msg.delete()
+
 async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     query = update.callback_query
@@ -128,8 +132,7 @@ async def select_language_src_handler(update: Update, context: ContextTypes.DEFA
         reply_markup=None # in order to hide the keyboard once a language has been selected
     )
 
-    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
-        await msg.delete()     
+    await __clear_msgs(context=context)
     
     __init_user_data(context)
 
@@ -181,8 +184,7 @@ async def select_language_dst_handler(update: Update, context: ContextTypes.DEFA
         reply_markup=None # in order to hide the keyboard once a language has been selected
     )
     
-    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
-        await msg.delete()
+    await __clear_msgs(context=context)
     
     __init_user_data(context)
 
