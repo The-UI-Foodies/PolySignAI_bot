@@ -71,6 +71,24 @@ async def __print_src_or_dst_command(
         )
 
 
+async def __is_there_in_progress_task(update: Update, context: ContextTypes.DEFAULT_TYPE, task_to_start: str) -> bool:
+
+    if context.user_data["task_in_progress"] is not None:
+    
+        msg = await update.message.reply_text(
+            text=f"Can't start {task_to_start} because there is another task in progress ({context.user_data['task_in_progress']})\n"
+                f"Finish {context.user_data['task_in_progress']} first!",
+            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
+        )
+
+        context.user_data["task_in_progress_error_raised_msg_list"].append(update.message)
+        context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
+
+        return True
+    
+    return False
+
+
 # Define a few command handlers. These usually take the two arguments update and
 # context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -92,16 +110,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if context.user_data["task_in_progress"] is not None:
-        
-        msg = await update.message.reply_text(
-            text=f"Can't start source language selection because there is another task in progress ({context.user_data['task_in_progress']})\n"
-                f"Finish {context.user_data['task_in_progress']} first!",
-            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
-        )
-
-        context.user_data["task_in_progress_error_raised_msg_list"].append(update.message)
-        context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
+    if await __is_there_in_progress_task(update, context, task_to_start="source language selection"):
 
         return
 
@@ -147,17 +156,7 @@ async def print_src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if context.user_data["task_in_progress"] is not None:
-        
-        msg = await update.message.reply_text(
-            text=f"Can't start source language selection because there is another task in progress ({context.user_data['task_in_progress']})\n"
-                f"Finish {context.user_data['task_in_progress']} first!",
-            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
-        )
-
-        context.user_data["task_in_progress_error_raised_msg_list"].append(update.message)
-        context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
-
+    if await __is_there_in_progress_task(update, context, task_to_start="destination language selection"):
         return
 
     context.user_data["task_in_progress"] = DST_LANG_SELECTION_TASK
