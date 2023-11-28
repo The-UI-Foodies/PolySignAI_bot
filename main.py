@@ -123,12 +123,12 @@ async def select_language_src_handler(update: Update, context: ContextTypes.DEFA
 
     query = update.callback_query
     
-    context.user_data["src_lang"] = query.data
+    context.user_data[SRC_LANG] = query.data
     
     await query.answer()
     
     await query.edit_message_text(
-        text=f"Selected source language: {context.user_data['src_lang']}",
+        text=f"Selected source language: {context.user_data[SRC_LANG]}",
         reply_markup=None # in order to hide the keyboard once a language has been selected
     )
 
@@ -175,12 +175,12 @@ async def select_language_dst_handler(update: Update, context: ContextTypes.DEFA
 
     query = update.callback_query
     
-    context.user_data["dst_lang"] = query.data
+    context.user_data[DST_LANG] = query.data
     
     await query.answer()
 
     await query.edit_message_text(
-        text=f"Selected destination language: {context.user_data['dst_lang']}",
+        text=f"Selected destination language: {context.user_data[DST_LANG]}",
         reply_markup=None # in order to hide the keyboard once a language has been selected
     )
     
@@ -212,10 +212,10 @@ async def print_src_and_dst_command(update: Update, context: ContextTypes.DEFAUL
 
 async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if "dst_lang" in context.user_data:
+    if DST_LANG in context.user_data:
         # TODO add possibility of selecting missing language if it has NOT been selected before
     
-        dst_lang = context.user_data["dst_lang"]
+        dst_lang = context.user_data[DST_LANG]
 
     else:
 
@@ -226,10 +226,10 @@ async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         return
 
-    if "src_lang" in context.user_data:
+    if SRC_LANG in context.user_data:
         # TODO add possibility of selecting missing language if it has NOT been selected before
     
-        src_lang = context.user_data["src_lang"]
+        src_lang = context.user_data[SRC_LANG]
 
     else:
 
@@ -240,13 +240,13 @@ async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         return
 
-    context.user_data["dst_lang"] = src_lang
-    context.user_data["src_lang"] = dst_lang
+    context.user_data[DST_LANG] = src_lang
+    context.user_data[SRC_LANG] = dst_lang
 
     await update.message.reply_text(
             f"Source and destination language swapped!\n"
-            f"Source language: {context.user_data['src_lang']}\n"
-            f"Destination language: {context.user_data['dst_lang']}\n"
+            f"Source language: {context.user_data[SRC_LANG]}\n"
+            f"Destination language: {context.user_data[DST_LANG]}\n"
         )
 
 ### --- swap --- ###
