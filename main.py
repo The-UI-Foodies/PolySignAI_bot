@@ -93,6 +93,24 @@ async def __is_there_in_progress_task(update: Update, context: ContextTypes.DEFA
     return False
 
 
+async def src_or_dst_command(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, task_to_start: str,
+    lang_selection_task: str, command_message: str
+) -> None:
+    
+    if await __is_there_in_progress_task(update, context, task_to_start):
+
+        return
+
+    context.user_data["task_in_progress"] = lang_selection_task
+
+    keyboard = inline_keyboard_builder()
+    
+    msg = await update.message.reply_text(command_message, reply_markup=keyboard)
+
+    context.user_data["task_in_progress_msg_id"] = msg.message_id
+
+
 # Define a few command handlers. These usually take the two arguments update and
 # context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -114,19 +132,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if await __is_there_in_progress_task(update, context, task_to_start="source language selection"):
-
-        return
-
-    context.user_data["task_in_progress"] = SRC_LANG_SELECTION_TASK
-
-    keyboard = inline_keyboard_builder()
-    
-    msg = await update.message.reply_text(
-        SRC_COMMAND_MESSAGE,
-        reply_markup=keyboard
+    await src_or_dst_command(
+        update, context, 
+        SRC_TASK_TO_START, SRC_LANG_SELECTION_TASK, SRC_COMMAND_MESSAGE
     )
-    context.user_data["task_in_progress_msg_id"] = msg.message_id
 
 async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
@@ -156,18 +165,10 @@ async def print_src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    if await __is_there_in_progress_task(update, context, task_to_start="destination language selection"):
-        return
-
-    context.user_data["task_in_progress"] = DST_LANG_SELECTION_TASK
-
-    keyboard = inline_keyboard_builder()
-    
-    msg = await update.message.reply_text(
-        DST_COMMAND_MESSAGE,
-        reply_markup=keyboard
+    await src_or_dst_command(
+        update, context, 
+        DST_TASK_TO_START, DST_LANG_SELECTION_TASK, DST_COMMAND_MESSAGE
     )
-    context.user_data["task_in_progress_msg_id"] = msg.message_id
 
 
 async def select_language_dst_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -250,13 +251,16 @@ async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 ### --- swap --- ###
 
-
+### --- translation --- ###
 
 async def translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # TODO if src is sign language, then message should contain video!
     
     await update.message.reply_text(update.message.text)
+
+### --- translation --- ###
+
 
 async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
@@ -265,8 +269,14 @@ async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     
     elif context.user_data["task_in_progress"] == DST_LANG_SELECTION_TASK:
         await select_language_dst_handler(update, context)
-    
-    
+
+
+async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    # TODO
+    # NOTE it (probably) needs added support from BotFather: https://stackoverflow.com/questions/34457568/how-to-show-options-in-telegram-bot
+
+    pass
 
 def main() -> None:
     """Start the bot."""
@@ -286,6 +296,7 @@ def main() -> None:
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translation_entry_point))
+    application.add_handler(MessageHandler(filters.COMMAND, detect_wrong_command))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)

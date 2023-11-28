@@ -26,6 +26,9 @@ US_FLAG_EMOJI      = "\U0001f1fa\U0001f1f8"
 
 OPEN_HANDS_EMOJI = "\U0001f450"
 
+SRC_TASK_TO_START = "source language selection"
+DST_TASK_TO_START = "destination language selection"
+
 SRC_LANG_SELECTION_TASK = "Source language selection"
 DST_LANG_SELECTION_TASK = "Destination language selection"
 
