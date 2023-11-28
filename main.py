@@ -58,6 +58,10 @@ def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
     context.user_data["task_in_progress_msg_id"] = None
     context.user_data["task_in_progress_error_raised_msg_list"] = []
 
+async def __clear_msgs(context: ContextTypes.DEFAULT_TYPE) -> None:
+    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
+        await msg.delete()
+
 async def __print_src_or_dst_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE, direction_key: str, direction: str
 ):
@@ -123,10 +127,6 @@ async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         reply_markup=keyboard
     )
     context.user_data["task_in_progress_msg_id"] = msg.message_id
-
-async def __clear_msgs(context: ContextTypes.DEFAULT_TYPE) -> None:
-    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
-        await msg.delete()
 
 async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
