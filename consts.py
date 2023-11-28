@@ -1,3 +1,5 @@
+# TODO update it with our command!
+
 HELP_MESSAGE = "- /start:  Start\n" \
                "- /swap:  Swap source and destination languages\n" \
                "- /src:  Change source language (auto for detect language)\n" \
@@ -8,7 +10,7 @@ HELP_MESSAGE = "- /start:  Start\n" \
                "- /contact:  Contact with admin %s"
 
 SRC_COMMAND_MESSAGE  = "Select the language to translate from:"
-DEST_COMMAND_MESSAGE = "Select the language to translate to:"
+DST_COMMAND_MESSAGE = "Select the language to translate to:"
 
 # If you want to add some task, you gotta add form the last position
 TASKS = ["SELECT_LANGUAGE_DST", "SELECT_LANGUAGE_SRC"]
@@ -23,6 +25,9 @@ SPANISH_FLAG_EMOJI = "\U0001f1ea\U0001f1f8"
 US_FLAG_EMOJI      = "\U0001f1fa\U0001f1f8"
 
 OPEN_HANDS_EMOJI = "\U0001f450"
+
+SRC_LANG_SELECTION_TASK = "Source language selection"
+DST_LANG_SELECTION_TASK = "Destination language selection"
 
 KEYBOARD_LANG_LIST = [
     f"Italian {ITALIAN_FLAG_EMOJI}", 

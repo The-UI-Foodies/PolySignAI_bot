@@ -38,12 +38,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-def my_update_dict(dict: dict, key, value):
-    dict.update({key:value})
-    return dict
-
-
-def inline_keyboard_builder(is_src: bool, make_selected=0) -> InlineKeyboardMarkup:
+def inline_keyboard_builder() -> InlineKeyboardMarkup:
 
     language_keyboard = np.array(
         [
@@ -61,6 +56,11 @@ def inline_keyboard_builder(is_src: bool, make_selected=0) -> InlineKeyboardMark
 # Define a few command handlers. These usually take the two arguments update and
 # context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    context.user_data["task_in_progress"] = None
+    context.user_data["task_in_progress_msg_id"] = None
+    context.user_data["task_in_progress_error_raised_msg_list"] = []
+
     """Send a message when the command /start is issued."""
     user = update.effective_user
     await update.message.reply_html(
@@ -72,53 +72,190 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     await update.message.reply_text(HELP_MESSAGE)
 
+### --- src --- ###
+
 async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    keyboard = inline_keyboard_builder(True)
+
+    if context.user_data["task_in_progress"] is not None:
+        
+        msg = await update.message.reply_text(
+            text=f"Can't start source language selection because there is another task in progress ({context.user_data['task_in_progress']})\n"
+                f"Finish {context.user_data['task_in_progress']} first!",
+            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
+        )
+
+        context.user_data["task_in_progress_error_raised_msg_list"].append(update.message)
+        context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
+
+        return
+
+    context.user_data["task_in_progress"] = SRC_LANG_SELECTION_TASK
+
+    keyboard = inline_keyboard_builder()
     
-    await update.message.reply_text(
+    msg = await update.message.reply_text(
         SRC_COMMAND_MESSAGE,
         reply_markup=keyboard
     )
-    
-async def dest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await None
+    context.user_data["task_in_progress_msg_id"] = msg.message_id
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Echo the user message."""
-    await update.message.reply_text(update.message.text)
+async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, data:dict) -> None:
     query = update.callback_query
+    
+    context.user_data["src_lang"] = query.data
+    
     await query.answer()
+    
     await query.edit_message_text(
-        f"Selected source language: {data['lang']}\nNow select the destination:", 
-        reply_markup=inline_keyboard_builder(is_src = False)
+        text=f"Selected source language: {context.user_data['src_lang']}",
+        reply_markup=None # in order to hide the keyboard once a language has been selected
     )
 
-async def select_language_dst_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, data:dict) -> None:
+    context.user_data["task_in_progress"] = None
+    context.user_data["task_in_progress_msg_id"] = None
+
+
+    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
+        await msg.delete()     
+    context.user_data["task_in_progress_error_raised_msg_list"] = []
+
+async def print_src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if "src_lang" in context.user_data:
+        await update.message.reply_text(f"Selected source language: {context.user_data['src_lang']}")
+    
+    else:
+        await update.message.reply_text(
+            f"No source language selected yet.\nUse /src command to set the source language"
+        )
+
+### --- src --- ###
+
+### --- dst --- ###
+
+async def dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if context.user_data["task_in_progress"] is not None:
+        
+        msg = await update.message.reply_text(
+            text=f"Can't start source language selection because there is another task in progress ({context.user_data['task_in_progress']})\n"
+                f"Finish {context.user_data['task_in_progress']} first!",
+            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
+        )
+
+        context.user_data["task_in_progress_error_raised_msg_list"].append(update.message)
+        context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
+
+        return
+
+    context.user_data["task_in_progress"] = DST_LANG_SELECTION_TASK
+
+    keyboard = inline_keyboard_builder()
+    
+    msg = await update.message.reply_text(
+        DST_COMMAND_MESSAGE,
+        reply_markup=keyboard
+    )
+    context.user_data["task_in_progress_msg_id"] = msg.message_id
+
+
+async def select_language_dst_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
     query = update.callback_query
-    print()
-    print(update)
-    print()
-    print()
+    
+    context.user_data["dst_lang"] = query.data
+    
     await query.answer()
-    await query.edit_message_text(f"Ciao")
+
+    await query.edit_message_text(
+        text=f"Selected destination language: {context.user_data['dst_lang']}",
+        reply_markup=None # in order to hide the keyboard once a language has been selected
+    )
+
+    context.user_data["task_in_progress"] = None
+    context.user_data["task_in_progress_msg_id"] = None
+    
+    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
+        await msg.delete()
+    context.user_data["task_in_progress_error_raised_msg_list"] = []
+
+async def print_dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if "dst_lang" in context.user_data:
+        await update.message.reply_text(f"Selected destination language: {context.user_data['dst_lang']}")
+    
+    else:
+        await update.message.reply_text(
+            f"No destination language selected yet.\nUse /dst command to set the destination language"
+        )
+
+### --- dst --- ###
+
+### --- src and dst --- ##
+
+# TODO
+
+### --- src and dst --- ##
+
+### --- swap --- ###
+
+async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if "dst_lang" in context.user_data:
+        # TODO add possibility of selecting missing language if it has NOT been selected before
+    
+        dst_lang = context.user_data["dst_lang"]
+
+    else:
+
+        await update.message.reply_text(
+            f"Can't swap languages because no destination language selected yet.\n"
+            f"Use /dst command to set the destination language"
+        )
+
+        return
+
+    if "src_lang" in context.user_data:
+        # TODO add possibility of selecting missing language if it has NOT been selected before
+    
+        src_lang = context.user_data["src_lang"]
+
+    else:
+
+        await update.message.reply_text(
+            f"Can't swap languages because no source language selected yet.\n"
+            f"Use /src command to set the source language"
+        )
+
+        return
+
+    context.user_data["dst_lang"] = src_lang
+    context.user_data["src_lang"] = dst_lang
+
+    await update.message.reply_text(
+            f"Source and destination language swapped!\n"
+            f"Source language: {context.user_data['src_lang']}\n"
+            f"Destination language: {context.user_data['dst_lang']}\n"
+        )
+
+### --- swap --- ###
+
+
+
+async def translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    # TODO if src is sign language, then message should contain video!
+    
+    await update.message.reply_text(update.message.text)
 
 async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    #if query.data == "Disabled":
 
-    print()
-    print()
-    print(query.data)
-    print()
-    print()
-    data = json.loads(query.data)
-
-    if data["task"] ==  "SELECT_LANGUAGE_SRC":
-        await select_language_src_handler(update, context, data)
-    elif data["task"] == "SELECT_LANGUAGE_DST":
-        await select_language_dst_handler(update, context, data)
+    if context.user_data["task_in_progress"] == SRC_LANG_SELECTION_TASK:
+        await select_language_src_handler(update, context)
+    
+    elif context.user_data["task_in_progress"] == DST_LANG_SELECTION_TASK:
+        await select_language_dst_handler(update, context)
     
     
 
@@ -131,10 +268,14 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("src", src_command))
+    application.add_handler(CommandHandler("dst", dst_command))
+    application.add_handler(CommandHandler("swap", swap_command))
+    application.add_handler(CommandHandler("langsrc", print_src_command))
+    application.add_handler(CommandHandler("langdst", print_dst_command))
     application.add_handler(CallbackQueryHandler(query_handler))
 
     # on non command i.e message - echo the message on Telegram
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translation_entry_point))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
