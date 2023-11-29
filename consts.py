@@ -39,14 +39,14 @@ DST_LANG = "dst_lang"
 DST = "destination"
 
 KEYBOARD_LANG_LIST = [
-    f"Italian {ITALIAN_FLAG_EMOJI}", 
-    f"English {ENGLISH_FLAG_EMOJI}",
-    f"French {FRENCH_FLAG_EMOJI}",
-    f"German {GERMAN_FLAG_EMOJI}",
-    f"Spanish {SPANISH_FLAG_EMOJI}",
-    f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
+    {"text": f"Italian {ITALIAN_FLAG_EMOJI}", "is_spoken": True},
+    {"text": f"English {ENGLISH_FLAG_EMOJI}", "is_spoken": True},
+    {"text": f"French {FRENCH_FLAG_EMOJI}", "is_spoken": True},
+    {"text": f"German {GERMAN_FLAG_EMOJI}", "is_spoken": True},
+    {"text": f"Spanish {SPANISH_FLAG_EMOJI}", "is_spoken": True},
+    {"text": f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
 ]

@@ -45,7 +45,7 @@ def inline_keyboard_builder() -> InlineKeyboardMarkup:
             InlineKeyboardButton(
                 lang, 
                 callback_data=lang,
-            ) for lang in KEYBOARD_LANG_LIST
+            ) for lang in [lang_obj["text"] for lang_obj in KEYBOARD_LANG_LIST]
         ]
     )
 
@@ -252,9 +252,39 @@ async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 ### --- swap --- ###
 
 ### --- translation --- ###
+def is_signed(button_text: str):
+    for obj in KEYBOARD_LANG_LIST:
+        if button_text in obj.values():
+            return not obj["is_spoken"]
+
+def text_to_sign(text: str):
+    return
+
+def text_to_text(text: str):
+    return
 
 async def text_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("text_translation_entry_point")
+    # Error handling
+    if DST_LANG not in context.user_data:
+        await update.message.reply_text("Dst lang not set")
+        return
+    
+    if SRC_LANG not in context.user_data:
+        await update.message.reply_text("Src lang not set")
+        return
+
+    if is_signed(context.user_data[SRC_LANG]):
+        await update.message.reply_text("You must send a video")
+        return
+    
+    # No errors detected
+    
+    if is_signed(context.user_data[DST_LANG]):
+        text_to_sign(update.message.text)
+        video = open("./dummy/translation.mp4", "rb")
+        await update.message.reply_video(video=video, supports_streaming=True)
+    else:
+        text_to_text(update.message.text)
 
 async def video_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("video_translation_entry_point")
