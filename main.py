@@ -21,7 +21,7 @@ import numpy as np
 import json
 import emoji
 
-from telegram import ForceReply, Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ForceReply, Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 from dotenv import load_dotenv
 
@@ -253,14 +253,20 @@ async def swap_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 ### --- translation --- ###
 
-async def translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def text_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("text_translation_entry_point")
 
-    # TODO if src is sign language, then message should contain video!
-    
-    await update.message.reply_text(update.message.text)
+async def video_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("video_translation_entry_point")
+
+async def audio_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("audio_translation_entry_point")
+
 
 ### --- translation --- ###
 
+async def not_supported_type_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("not_supported_type_entry_point")
 
 async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
@@ -272,10 +278,9 @@ async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
+    print("detect_wrong_command")
     # TODO
     # NOTE it (probably) needs added support from BotFather: https://stackoverflow.com/questions/34457568/how-to-show-options-in-telegram-bot
-
     pass
 
 def main() -> None:
@@ -294,9 +299,30 @@ def main() -> None:
     application.add_handler(CommandHandler("lang", print_src_and_dst_command))
     application.add_handler(CallbackQueryHandler(query_handler))
 
+    application.bot.set_my_commands(commands=[
+        BotCommand("start", "Start the bot"),
+        BotCommand("help", "Show the list of available commands"),
+        BotCommand("src", "Set the source language"),
+        BotCommand("dst", "Set the destination language"),
+        BotCommand("swap", "Swap the source and destination languages"),
+        BotCommand("langsrc", "Show the current source language"),
+        BotCommand("langdst", "Show the current destination language"),
+        BotCommand("lang", "Show the current source and destination languages"),
+    ])
+
     # on non command i.e message - echo the message on Telegram
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translation_entry_point))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_translation_entry_point))
+    application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, video_translation_entry_point))
+    application.add_handler(MessageHandler(filters.VOICE, audio_translation_entry_point))
+    
     application.add_handler(MessageHandler(filters.COMMAND, detect_wrong_command))
+
+    not_supported_filter = ~(filters.TEXT |
+                             filters.VIDEO |filters.VIDEO_NOTE |
+                             filters.VOICE)
+
+    application.add_handler(MessageHandler(not_supported_filter, not_supported_type_entry_point))
+
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
