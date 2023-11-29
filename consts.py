@@ -1,5 +1,7 @@
 # TODO update it with our command!
 
+WELCOME_MESSAGE = "Welcome to PolySignAI!"
+
 HELP_MESSAGE = "- /start:  Start\n" \
                "- /swap:  Swap source and destination languages\n" \
                "- /src:  Change source language (auto for detect language)\n" \

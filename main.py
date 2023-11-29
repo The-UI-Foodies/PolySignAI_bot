@@ -22,7 +22,7 @@ import numpy as np
 import json
 import emoji
 
-from telegram import ForceReply, Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 from dotenv import load_dotenv
 
@@ -58,6 +58,19 @@ def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
     context.user_data["task_in_progress"] = None
     context.user_data["task_in_progress_msg_id"] = None
     context.user_data["task_in_progress_error_raised_msg_list"] = []
+
+async def post_init(application: Application):
+    await application.bot.set_my_commands(commands=[
+        BotCommand("start", "Start the bot"),
+        BotCommand("help", "Show the list of available commands"),
+        BotCommand("src", "Set the source language"),
+        BotCommand("dst", "Set the destination language"),
+        BotCommand("swap", "Swap the source and destination languages"),
+        BotCommand("langsrc", "Show the current source language"),
+        BotCommand("langdst", "Show the current destination language"),
+        BotCommand("lang", "Show the current source and destination languages"),
+    ])
+    
 
 async def __clear_msgs(context: ContextTypes.DEFAULT_TYPE) -> None:
     for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
@@ -117,13 +130,10 @@ async def src_or_dst_command(
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     __init_user_data(context)
-
+    
     """Send a message when the command /start is issued."""
-    user = update.effective_user
-    await update.message.reply_html(
-        rf"Hi {user.mention_html()}!",
-        reply_markup=ForceReply(selective=True),
-    )
+    await update.message.reply_text(WELCOME_MESSAGE)
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
@@ -369,16 +379,15 @@ async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    print("detect_wrong_command")
-    # TODO
-    # NOTE it (probably) needs added support from BotFather: https://stackoverflow.com/questions/34457568/how-to-show-options-in-telegram-bot
-    pass
+    await update.message.reply_text(
+        "This command is not supported.\nValid options:\n" + HELP_MESSAGE,
+        reply_to_message_id=update.message.message_id
+        )
 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(TOKEN).build()
-
+    application = Application.builder().token(TOKEN).post_init(post_init).build()
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
@@ -389,17 +398,6 @@ def main() -> None:
     application.add_handler(CommandHandler("langdst", print_dst_command))
     application.add_handler(CommandHandler("lang", print_src_and_dst_command))
     application.add_handler(CallbackQueryHandler(query_handler))
-
-    application.bot.set_my_commands(commands=[
-        BotCommand("start", "Start the bot"),
-        BotCommand("help", "Show the list of available commands"),
-        BotCommand("src", "Set the source language"),
-        BotCommand("dst", "Set the destination language"),
-        BotCommand("swap", "Swap the source and destination languages"),
-        BotCommand("langsrc", "Show the current source language"),
-        BotCommand("langdst", "Show the current destination language"),
-        BotCommand("lang", "Show the current source and destination languages"),
-    ])
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_translation_entry_point))
