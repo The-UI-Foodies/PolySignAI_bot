@@ -272,6 +272,14 @@ def audio_to_text(audio: BufferedReader) -> str:
     text = text_to_text("text")
     return text
 
+def sign_to_text(video: BufferedReader) -> str:
+    return "text"
+
+def sign_to_sign(video: BufferedReader) -> BufferedReader:
+    text = sign_to_text(video)
+    video = text_to_sign(text)
+    return video
+
 
 async def text_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg_id = update.message.message_id
@@ -295,10 +303,32 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     else:
         text = text_to_text(update.message.text)
-        await update.message.reply_text("text", reply_to_message_id=msg_id)
+        await update.message.reply_text(text, reply_to_message_id=msg_id)
 
 async def video_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("video_translation_entry_point")
+    msg_id = update.message.message_id
+    # Error handling
+    if DST_LANG not in context.user_data:
+        await update.message.reply_text("Dst lang not set")
+        return
+    
+    if SRC_LANG not in context.user_data:
+        await update.message.reply_text("Src lang not set")
+        return
+
+    if not is_signed(context.user_data[SRC_LANG]):
+        await update.message.reply_text("You must send a text or an voice message", reply_to_message_id=msg_id)
+        return
+    
+    # No error detected
+
+    if is_signed(context.user_data[DST_LANG]):
+        video = sign_to_sign(update.message.text)
+        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
+    else:
+        text = sign_to_text(update.message.text)
+        await update.message.reply_text(text, reply_to_message_id=msg_id)
+    
 
 async def audio_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg_id = update.message.message_id
@@ -322,7 +352,7 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     else:
         text = audio_to_text(update.message.text)
-        await update.message.reply_text("text", reply_to_message_id=msg_id)
+        await update.message.reply_text(text, reply_to_message_id=msg_id)
 
 ### --- translation --- ###
 
