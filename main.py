@@ -23,18 +23,31 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-def inline_keyboard_builder() -> InlineKeyboardMarkup:
+def inline_keyboard_builder(to_disable: str) -> InlineKeyboardMarkup:
+    temp_lang_list = [lang_obj["text"] for lang_obj in KEYBOARD_LANG_LIST]
 
-    language_keyboard = np.array(
-        [
+    if to_disable:
+        to_disable_index = temp_lang_list.index(to_disable)
+        temp_lang_list.remove(to_disable)
+
+    language_keyboard = [
             InlineKeyboardButton(
                 lang, 
                 callback_data=lang,
-            ) for lang in [lang_obj["text"] for lang_obj in KEYBOARD_LANG_LIST]
+            ) for lang in temp_lang_list
         ]
-    )
 
-    language_keyboard = language_keyboard.reshape(-1, NUM_LANGS_PER_ROW).tolist()
+    if to_disable:
+        language_keyboard.insert(
+            to_disable_index,
+            InlineKeyboardButton(
+                emoji.emojize(":check_mark: ") + to_disable,
+                callback_data="disabled"
+            )
+        )
+
+
+    language_keyboard = np.array(language_keyboard).reshape(-1, NUM_LANGS_PER_ROW).tolist()
     
     return InlineKeyboardMarkup(language_keyboard)
 
@@ -90,6 +103,17 @@ async def __is_there_in_progress_task(update: Update, context: ContextTypes.DEFA
     
     return False
 
+# Return the already selected language to remove from the keyboard
+def __get_different_direction_lang(lang_selection_task: str, user_data: dict):
+    if lang_selection_task == SRC_LANG_SELECTION_TASK:
+        if DST_LANG in user_data:
+            return user_data[DST_LANG]
+        
+    if lang_selection_task == DST_LANG_SELECTION_TASK:
+        if SRC_LANG in user_data:
+            return user_data[SRC_LANG]
+        
+    return ""
 
 async def src_or_dst_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE, task_to_start: str,
@@ -102,7 +126,7 @@ async def src_or_dst_command(
 
     context.user_data["task_in_progress"] = lang_selection_task
 
-    keyboard = inline_keyboard_builder()
+    keyboard = inline_keyboard_builder(__get_different_direction_lang(lang_selection_task, context.user_data))
     
     msg = await update.message.reply_text(command_message, reply_markup=keyboard)
 
@@ -375,6 +399,9 @@ async def not_supported_type_entry_point(update: Update, context: ContextTypes.D
     await update.message.reply_text("not_supported_type_entry_point")
 
 async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.callback_query.data == "disabled":
+        return await warning_select_different_lang(update, context)
+        return await update.callback_query.answer()
 
     if context.user_data["task_in_progress"] == SRC_LANG_SELECTION_TASK:
         await select_language_src_handler(update, context)
@@ -382,6 +409,16 @@ async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     elif context.user_data["task_in_progress"] == DST_LANG_SELECTION_TASK:
         await select_language_dst_handler(update, context)
 
+# If the language selected is disabled
+async def warning_select_different_lang(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.callback_query.answer()
+
+    msg = await update.callback_query.message.reply_text(
+            text="The language you selected has been already selected.\nPlease, choose a different language",
+            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
+        )
+
+    context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
 
 async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
