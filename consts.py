@@ -2,14 +2,31 @@
 
 WELCOME_MESSAGE = "Welcome to PolySignAI!"
 
-HELP_MESSAGE = "- /start:  Start\n" \
-               "- /swap:  Swap source and destination languages\n" \
-               "- /src:  Change source language (auto for detect language)\n" \
-               "- /dest:  Change destination language\n" \
-               "- /langs:  Show selected languages\n" \
-               "- /fav:  Favorites setting (add or remove languages from favorites lists)\n" \
-               "- /cancel:  Cancel the current operation\n" \
-               "- /contact:  Contact with admin %s"
+HELP_MESSAGE = """
+This bot can translate text, audio, and video between multiple languages.
+
+*Available commands:*
+
+- /start - Start the bot
+- /help - Get help using the bot
+- /src - Set the source language
+- /dst - Set the destination language
+- /lang_src - Print the selected source language
+- /lang_dst - Print the selected destination language
+- /swap - Swap the source and destination languages
+
+*Usage:*
+
+- To translate text, simply send the text you want to translate as a message.
+- To translate audio, send an audio message.
+- To translate video, send a video message.
+
+*Examples:*
+
+- To translate "Hello, world!" from English to Italian, type "Ciao, mondo!"
+- To translate an audio recording of a speech from French to Spanish, send the audio message.
+- To translate a video of a lecture from German to Chinese, send the video message.
+"""
 
 SRC_COMMAND_MESSAGE  = "Select the language to translate from:"
 DST_COMMAND_MESSAGE = "Select the language to translate to:"

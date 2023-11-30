@@ -4,6 +4,7 @@ import logging
 import os
 import numpy as np
 import emoji
+import telegram
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
@@ -120,7 +121,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    await update.message.reply_text(HELP_MESSAGE)
+    await update.message.reply_text(HELP_MESSAGE, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
 ### --- src --- ###
 
@@ -377,8 +378,8 @@ def main() -> None:
     application.add_handler(CommandHandler("src", src_command))
     application.add_handler(CommandHandler("dst", dst_command))
     application.add_handler(CommandHandler("swap", swap_command))
-    application.add_handler(CommandHandler("langsrc", print_src_command))
-    application.add_handler(CommandHandler("langdst", print_dst_command))
+    application.add_handler(CommandHandler("lang_src", print_src_command))
+    application.add_handler(CommandHandler("lang_dst", print_dst_command))
     application.add_handler(CommandHandler("lang", print_src_and_dst_command))
     application.add_handler(CallbackQueryHandler(query_handler))
 
