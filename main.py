@@ -413,7 +413,7 @@ async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "This command is not supported.\nValid options:\n" + HELP_MESSAGE,
-        reply_to_message_id=update.message.message_id
+        reply_to_message_id=update.message.message_id, parse_mode=telegram.constants.ParseMode.MARKDOWN
         )
 
 def main() -> None:

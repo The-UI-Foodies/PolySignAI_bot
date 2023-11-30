@@ -25,7 +25,7 @@ This bot can translate text, audio, and video between multiple signed and spolen
 
 - To translate "Hello, world!" from English to Italian, type "Ciao, mondo!"
 - To translate an audio recording of a speech from French to Spanish, send the audio message.
-- To translate a video of a lecture from German to Chinese, send the video message.
+- To translate a video from German to Chinese, send the video message.
 """
 
 SRC_COMMAND_MESSAGE  = "Select the language to translate from:"
