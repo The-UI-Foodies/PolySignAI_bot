@@ -5,6 +5,7 @@ import os
 import numpy as np
 import emoji
 import telegram
+import copy
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
@@ -23,19 +24,34 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-def inline_keyboard_builder() -> InlineKeyboardMarkup:
+def inline_keyboard_builder(to_remove: str = "") -> InlineKeyboardMarkup:
+    temp_lang_list = copy.deepcopy(KEYBOARD_LANG_LIST)
+    temp_lang_list = [lang_obj["text"] for lang_obj in temp_lang_list if lang_obj["text"] != to_remove]
+
+    is_len_odd = len(temp_lang_list) % 2
+
+    lst_pop = None
+
+    if is_len_odd:
+        lst_pop = temp_lang_list.pop()
+
 
     language_keyboard = np.array(
         [
             InlineKeyboardButton(
                 lang, 
                 callback_data=lang,
-            ) for lang in [lang_obj["text"] for lang_obj in KEYBOARD_LANG_LIST]
+            ) for lang in temp_lang_list
         ]
     )
 
     language_keyboard = language_keyboard.reshape(-1, NUM_LANGS_PER_ROW).tolist()
     
+    if is_len_odd:
+        language_keyboard.append(
+            [InlineKeyboardButton(lst_pop, callback_data=lst_pop)]
+        )
+
     return InlineKeyboardMarkup(language_keyboard)
 
 def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
@@ -90,6 +106,17 @@ async def __is_there_in_progress_task(update: Update, context: ContextTypes.DEFA
     
     return False
 
+# Return the already selected language to remove from the keyboard
+def __get_different_direction_lang(lang_selection_task: str, user_data: dict):
+    if lang_selection_task == SRC_LANG_SELECTION_TASK:
+        if DST_LANG in user_data:
+            return user_data[DST_LANG]
+        
+    if lang_selection_task == DST_LANG_SELECTION_TASK:
+        if SRC_LANG in user_data:
+            return user_data[SRC_LANG]
+        
+    return ""
 
 async def src_or_dst_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE, task_to_start: str,
@@ -102,7 +129,10 @@ async def src_or_dst_command(
 
     context.user_data["task_in_progress"] = lang_selection_task
 
-    keyboard = inline_keyboard_builder()
+    a = __get_different_direction_lang(lang_selection_task, context.user_data)
+    print(a)
+
+    keyboard = inline_keyboard_builder(__get_different_direction_lang(lang_selection_task, context.user_data))
     
     msg = await update.message.reply_text(command_message, reply_markup=keyboard)
 
