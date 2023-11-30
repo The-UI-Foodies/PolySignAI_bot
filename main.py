@@ -129,9 +129,6 @@ async def src_or_dst_command(
 
     context.user_data["task_in_progress"] = lang_selection_task
 
-    a = __get_different_direction_lang(lang_selection_task, context.user_data)
-    print(a)
-
     keyboard = inline_keyboard_builder(__get_different_direction_lang(lang_selection_task, context.user_data))
     
     msg = await update.message.reply_text(command_message, reply_markup=keyboard)
