@@ -287,7 +287,10 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
         return
 
     if is_signed(context.user_data[SRC_LANG]):
-        await update.message.reply_text("You must send a video", reply_to_message_id=msg_id)
+        await update.message.reply_text(
+            f"You want to translate from the signed language {context.user_data[SRC_LANG]}, so you must send a video, NOT text!", 
+            reply_to_message_id=msg_id
+        )
         return
     
     # No errors detected
@@ -311,7 +314,10 @@ async def video_translation_entry_point(update: Update, context: ContextTypes.DE
         return
 
     if not is_signed(context.user_data[SRC_LANG]):
-        await update.message.reply_text("You must send a text or an voice message", reply_to_message_id=msg_id)
+        await update.message.reply_text(
+            f"You want to translate from the spoken language {context.user_data[SRC_LANG]}, so you must send a text or an voice message, NOT a video", 
+            reply_to_message_id=msg_id
+        )
         return
     
     # No error detected
@@ -336,7 +342,10 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
         return
 
     if is_signed(context.user_data[SRC_LANG]):
-        await update.message.reply_text("You must send a video", reply_to_message_id=msg_id)
+        await update.message.reply_text(
+            f"You want to translate from the signed language {context.user_data[SRC_LANG]}, so you must send a video, NOT audio!", 
+            reply_to_message_id=msg_id
+        )
         return
     
     # No errors detected
