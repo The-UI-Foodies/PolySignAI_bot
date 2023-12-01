@@ -3,7 +3,7 @@
 WELCOME_MESSAGE = "Welcome to PolySignAI!"
 
 HELP_MESSAGE = """
-This bot can translate text, audio, and video between multiple languages.
+This bot can translate text, audio, and video between multiple signed and spolen languages!
 
 *Available commands:*
 
