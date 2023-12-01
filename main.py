@@ -69,7 +69,7 @@ async def __print_src_or_dst_command(
     
     else:
         await update.message.reply_text(
-            f"No {direction} language selected yet.\nUse /src command to set the {direction} language"
+            f"No {direction} language selected yet.\nUse {'/src' if direction == 'source' else '/dst'} command to set the {direction} language"
         )
 
 
