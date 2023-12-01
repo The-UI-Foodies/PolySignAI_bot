@@ -257,17 +257,17 @@ def text_to_sign(text: str) -> BufferedReader:
     return video
 
 def audio_to_sign(audio: BufferedReader) -> BufferedReader:
-    return text_to_sign("text")
+    return text_to_sign("AUDIO_TO_TEXT_RESULT_PLACEHOLDER")
 
 def text_to_text(text: str) -> str:
-    return "I'm a translation"
+    return f"TEXT_TO_TEXT_TRANSLATION_PLACEHOLDER\nOriginal text: {text}"
 
 def audio_to_text(audio: BufferedReader) -> str:
     text = text_to_text("text")
     return text
 
 def sign_to_text(video: BufferedReader) -> str:
-    return "text"
+    return "SIGN_TO_TEXT_TRANSLATION_PLACEHOLDER"
 
 def sign_to_sign(video: BufferedReader) -> BufferedReader:
     text = sign_to_text(video)
