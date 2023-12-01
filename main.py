@@ -50,8 +50,8 @@ async def post_init(application: Application):
         BotCommand("src", "Set the source language"),
         BotCommand("dst", "Set the destination language"),
         BotCommand("swap", "Swap the source and destination languages"),
-        BotCommand("langsrc", "Show the current source language"),
-        BotCommand("langdst", "Show the current destination language"),
+        BotCommand("lang_src", "Show the current source language"),
+        BotCommand("lang_dst", "Show the current destination language"),
         BotCommand("lang", "Show the current source and destination languages"),
     ])
     
@@ -279,11 +279,17 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
     msg_id = update.message.message_id
     # Error handling
     if DST_LANG not in context.user_data:
-        await update.message.reply_text("Dst lang not set")
+        await update.message.reply_text(
+            f"Can't translate because no destination language selected yet.\n"
+            f"Use /dst command to set the destination language."
+        )
         return
     
     if SRC_LANG not in context.user_data:
-        await update.message.reply_text("Src lang not set")
+        await update.message.reply_text(
+            f"Can't translate because no source language selected yet.\n"
+            f"Use /src command to set the source language"
+        )
         return
 
     if is_signed(context.user_data[SRC_LANG]):
@@ -306,11 +312,17 @@ async def video_translation_entry_point(update: Update, context: ContextTypes.DE
     msg_id = update.message.message_id
     # Error handling
     if DST_LANG not in context.user_data:
-        await update.message.reply_text("Dst lang not set")
+        await update.message.reply_text(
+            f"Can't translate video because no destination language selected yet.\n"
+            f"Use /dst command to set the destination language"
+        )
         return
     
     if SRC_LANG not in context.user_data:
-        await update.message.reply_text("Src lang not set")
+        await update.message.reply_text(
+            f"Can't translate video because no source language selected yet.\n"
+            f"Use /src command to set the source language"
+        )
         return
 
     if not is_signed(context.user_data[SRC_LANG]):
