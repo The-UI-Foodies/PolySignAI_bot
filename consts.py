@@ -28,8 +28,8 @@ This bot can translate text, audio, and video between multiple signed and spolen
 - To translate a video of a lecture from German to Chinese, send the video message.
 """
 
-SRC_COMMAND_MESSAGE  = "Select the language to translate from:"
-DST_COMMAND_MESSAGE = "Select the language to translate to:"
+LANG_MESSAGE = "LANG_MESSAGE_PLACEHOLDER"
+LANG_DONE_MESSAGE = "LANG_DONE_MESSAGE_PLACEHOLDER"
 
 # If you want to add some task, you gotta add form the last position
 TASKS = ["SELECT_LANGUAGE_DST", "SELECT_LANGUAGE_SRC"]

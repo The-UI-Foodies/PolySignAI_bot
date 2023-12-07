@@ -10,6 +10,8 @@ from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKe
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 from dotenv import load_dotenv
 
+import lang_keyboard
+
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
@@ -23,96 +25,18 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-def inline_keyboard_builder() -> InlineKeyboardMarkup:
-
-    language_keyboard = np.array(
-        [
-            InlineKeyboardButton(
-                lang, 
-                callback_data=lang,
-            ) for lang in [lang_obj["text"] for lang_obj in KEYBOARD_LANG_LIST]
-        ]
-    )
-
-    language_keyboard = language_keyboard.reshape(-1, NUM_LANGS_PER_ROW).tolist()
-    
-    return InlineKeyboardMarkup(language_keyboard)
-
-def __reset_task(context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["task_in_progress"] = None
-    context.user_data["task_in_progress_msg_id"] = None
-    context.user_data["task_in_progress_error_raised_msg_list"] = []
-
 def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
     context.user_data[SRC_LANG] = KEYBOARD_LANG_LIST[1]["text"]
     context.user_data[DST_LANG] = KEYBOARD_LANG_LIST[5]["text"]
-    __reset_task(context)
 
 async def post_init(application: Application):
     await application.bot.set_my_commands(commands=[
         BotCommand("start", "Start the bot"),
-        BotCommand("help", "Show the list of available commands"),
-        BotCommand("src", "Set the source language"),
-        BotCommand("dst", "Set the destination language"),
+        BotCommand("help", "Get a quick overview of the bot's functionalities"),
         BotCommand("swap", "Swap the source and destination languages"),
-        BotCommand("lang_src", "Show the current source language"),
-        BotCommand("lang_dst", "Show the current destination language"),
-        BotCommand("lang", "Show the current source and destination languages"),
+        BotCommand("lang", "Show the current source and destination languages")
     ])
     
-
-async def __clear_msgs(context: ContextTypes.DEFAULT_TYPE) -> None:
-    for msg in context.user_data["task_in_progress_error_raised_msg_list"]:
-        await msg.delete()
-
-async def __print_src_or_dst_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, direction_key: str, direction: str
-):
-    
-    if direction_key in context.user_data:
-        await update.message.reply_text(f"Selected {direction} language: {context.user_data[direction_key]}")
-    
-    else:
-        await update.message.reply_text(
-            f"No {direction} language selected yet.\nUse {'/src' if direction == 'source' else '/dst'} command to set the {direction} language"
-        )
-
-
-async def __is_there_in_progress_task(update: Update, context: ContextTypes.DEFAULT_TYPE, task_to_start: str) -> bool:
-
-    if context.user_data["task_in_progress"] is not None:
-    
-        msg = await update.message.reply_text(
-            text=f"Can't start {task_to_start} because there is another task in progress ({context.user_data['task_in_progress']})\n"
-                f"Finish {context.user_data['task_in_progress']} first!",
-            reply_to_message_id=context.user_data["task_in_progress_msg_id"]
-        )
-
-        context.user_data["task_in_progress_error_raised_msg_list"].append(update.message)
-        context.user_data["task_in_progress_error_raised_msg_list"].append(msg)
-
-        return True
-    
-    return False
-
-
-async def src_or_dst_command(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, task_to_start: str,
-    lang_selection_task: str, command_message: str
-) -> None:
-    
-    if await __is_there_in_progress_task(update, context, task_to_start):
-
-        return
-
-    context.user_data["task_in_progress"] = lang_selection_task
-
-    keyboard = inline_keyboard_builder()
-    
-    msg = await update.message.reply_text(command_message, reply_markup=keyboard)
-
-    context.user_data["task_in_progress_msg_id"] = msg.message_id
-
 
 # Define a few command handlers. These usually take the two arguments update and
 # context.
@@ -128,85 +52,47 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     await update.message.reply_text(HELP_MESSAGE, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
-### --- src --- ###
+### --- lang --- ###
 
-async def src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def lang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    keyboard = lang_keyboard.build_keyboard(context.user_data[SRC_LANG], context.user_data[DST_LANG])
+    await update.message.reply_text(LANG_MESSAGE, reply_markup=keyboard)
 
-    await src_or_dst_command(
-        update, context, 
-        SRC_TASK_TO_START, SRC_LANG_SELECTION_TASK, SRC_COMMAND_MESSAGE
-    )
-
-async def select_language_src_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
+async def swap_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    
-    context.user_data[SRC_LANG] = query.data
-    
-    await query.answer()
-    
-    await query.edit_message_text(
-        text=f"Selected source language: {context.user_data[SRC_LANG]}",
-        reply_markup=None # in order to hide the keyboard once a language has been selected
-    )
 
-    await __clear_msgs(context=context)
-    
-    __reset_task(context)
+    keyboard = lang_keyboard.swap_languages(query.message.reply_markup)
+    await query.edit_message_reply_markup(keyboard)
+    return await query.answer()
 
-
-async def print_src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
-    await __print_src_or_dst_command(update=update, context=context, direction_key=SRC_LANG, direction=SRC)
-
-### --- src --- ###
-
-### --- dst --- ###
-
-async def dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
-    await src_or_dst_command(
-        update, context, 
-        DST_TASK_TO_START, DST_LANG_SELECTION_TASK, DST_COMMAND_MESSAGE
-    )
-
-
-async def select_language_dst_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
+async def lang_selection_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    src, dst = lang_keyboard.get_selected_from_keyboard(query.message.reply_markup)
+
+    lang, direction = query.data.split("_")
+    if direction == "src":
+        if dst == lang:
+            keyboard = lang_keyboard.swap_languages(query.message.reply_markup)
+        else:
+            keyboard = lang_keyboard.build_keyboard(lang, dst)
+    if direction == "dst":
+        if src == lang:
+            keyboard = lang_keyboard.swap_languages(query.message.reply_markup)
+        else:
+            keyboard = lang_keyboard.build_keyboard(src, lang)
     
-    context.user_data[DST_LANG] = query.data
-    
-    await query.answer()
+    await query.edit_message_reply_markup(keyboard)
+    return await query.answer()
 
-    await query.edit_message_text(
-        text=f"Selected destination language: {context.user_data[DST_LANG]}",
-        reply_markup=None # in order to hide the keyboard once a language has been selected
-    )
-    
-    await __clear_msgs(context=context)
-    
-    __reset_task(context)
+async def done_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    src, dst = lang_keyboard.get_selected_from_keyboard(update.callback_query.message.reply_markup)
+    context.user_data[SRC_LANG] = src
+    context.user_data[DST_LANG] = dst
+    await query.edit_message_text(LANG_DONE_MESSAGE, reply_markup=None)
+    return await query.answer()
 
-
-async def print_dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
-    await __print_src_or_dst_command(
-        update=update, context=context, direction_key=DST_LANG, direction=DST
-    )
-
-### --- dst --- ###
-
-### --- src and dst --- ##
-
-# TODO set src AND dst together
-
-async def print_src_and_dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-
-    await __print_src_or_dst_command(update=update, context=context, direction_key=SRC_LANG, direction=SRC)
-    await __print_src_or_dst_command(update=update, context=context, direction_key=DST_LANG, direction=DST)
-
-### --- src and dst --- ##
+### --- lang --- ###
 
 ### --- swap --- ###
 
@@ -380,13 +266,18 @@ async def not_supported_type_entry_point(update: Update, context: ContextTypes.D
     await update.message.reply_text("not_supported_type_entry_point")
 
 async def query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
 
-    if context.user_data["task_in_progress"] == SRC_LANG_SELECTION_TASK:
-        await select_language_src_handler(update, context)
+    if "_src" in query.data or "_dst" in query.data:
+        return await lang_selection_handler(update, context)
     
-    elif context.user_data["task_in_progress"] == DST_LANG_SELECTION_TASK:
-        await select_language_dst_handler(update, context)
+    if query.data == "Swap":
+        return await swap_handler(update, context)
 
+    if query.data == "Done":
+        return await done_handler(update, context)
+
+    return await query.answer()
 
 async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
@@ -401,12 +292,8 @@ def main() -> None:
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("src", src_command))
-    application.add_handler(CommandHandler("dst", dst_command))
     application.add_handler(CommandHandler("swap", swap_command))
-    application.add_handler(CommandHandler("lang_src", print_src_command))
-    application.add_handler(CommandHandler("lang_dst", print_dst_command))
-    application.add_handler(CommandHandler("lang", print_src_and_dst_command))
+    application.add_handler(CommandHandler("lang", lang_command))
     application.add_handler(CallbackQueryHandler(query_handler))
 
     # on non command i.e message - echo the message on Telegram
