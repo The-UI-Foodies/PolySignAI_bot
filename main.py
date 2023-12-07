@@ -38,10 +38,15 @@ def inline_keyboard_builder() -> InlineKeyboardMarkup:
     
     return InlineKeyboardMarkup(language_keyboard)
 
-def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
+def __reset_task(context: ContextTypes.DEFAULT_TYPE):
     context.user_data["task_in_progress"] = None
     context.user_data["task_in_progress_msg_id"] = None
     context.user_data["task_in_progress_error_raised_msg_list"] = []
+
+def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
+    context.user_data[SRC_LANG] = KEYBOARD_LANG_LIST[1]["text"]
+    context.user_data[DST_LANG] = KEYBOARD_LANG_LIST[5]["text"]
+    __reset_task(context)
 
 async def post_init(application: Application):
     await application.bot.set_my_commands(commands=[
@@ -147,7 +152,7 @@ async def select_language_src_handler(update: Update, context: ContextTypes.DEFA
 
     await __clear_msgs(context=context)
     
-    __init_user_data(context)
+    __reset_task(context)
 
 
 async def print_src_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -181,7 +186,7 @@ async def select_language_dst_handler(update: Update, context: ContextTypes.DEFA
     
     await __clear_msgs(context=context)
     
-    __init_user_data(context)
+    __reset_task(context)
 
 
 async def print_dst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
