@@ -168,97 +168,83 @@ def sign_to_sign(video: BufferedReader) -> BufferedReader:
 
 async def text_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg_id = update.message.message_id
-    # Error handling
-    if DST_LANG not in context.user_data:
-        await update.message.reply_text(
-            f"Can't translate because no destination language selected yet.\n"
-            f"Use /dst command to set the destination language."
-        )
-        return
-    
-    if SRC_LANG not in context.user_data:
-        await update.message.reply_text(
-            f"Can't translate because no source language selected yet.\n"
-            f"Use /src command to set the source language"
-        )
-        return
+    src = context.user_data[SRC_LANG]
+    dst = context.user_data[DST_LANG]
 
-    if is_signed(context.user_data[SRC_LANG]):
+    # Error handling
+    if is_signed(src) and is_signed(dst):
         await update.message.reply_text(
-            f"You want to translate from the signed language {context.user_data[SRC_LANG]}, so you must send a video, NOT text!", 
+            MSG_SHOULD_BE_VIDEO_ERROR, 
             reply_to_message_id=msg_id
         )
         return
     
     # No errors detected
-    
-    if is_signed(context.user_data[DST_LANG]):
-        video = text_to_sign(update.message.text)
-        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
-    else:
+    if not is_signed(src) and not is_signed(dst):
         text = text_to_text(update.message.text)
         await update.message.reply_text(text, reply_to_message_id=msg_id)
+    elif not is_signed(src):
+        # Without swapping
+        video = text_to_sign(update.message.text)
+        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
+    elif not is_signed(dst):
+        # Swapping
+        video = text_to_sign(update.message.text)
+        await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 async def video_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg_id = update.message.message_id
-    # Error handling
-    if DST_LANG not in context.user_data:
-        await update.message.reply_text(
-            f"Can't translate video because no destination language selected yet.\n"
-            f"Use /dst command to set the destination language"
-        )
-        return
-    
-    if SRC_LANG not in context.user_data:
-        await update.message.reply_text(
-            f"Can't translate video because no source language selected yet.\n"
-            f"Use /src command to set the source language"
-        )
-        return
+    src = context.user_data[SRC_LANG]
+    dst = context.user_data[DST_LANG]
 
-    if not is_signed(context.user_data[SRC_LANG]):
+    # Error handling
+    if (not is_signed(src)) and (not is_signed(dst)):
         await update.message.reply_text(
-            f"You want to translate from the spoken language {context.user_data[SRC_LANG]}, so you must send a text or an voice message, NOT a video", 
+            MSG_SHOULD_BE_TEXT_ERROR, 
             reply_to_message_id=msg_id
         )
         return
-    
-    # No error detected
 
-    if is_signed(context.user_data[DST_LANG]):
+    # No errors detected
+    if is_signed(src) and is_signed(dst):
         video = sign_to_sign(update.message.text)
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
-    else:
+    elif is_signed(src):
+        # Without swapping
+        text = sign_to_text(update.message.text)
+        await update.message.reply_text(text, reply_to_message_id=msg_id)
+    elif is_signed(dst):
+        # Swapping
         text = sign_to_text(update.message.text)
         await update.message.reply_text(text, reply_to_message_id=msg_id)
     
 
 async def audio_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg_id = update.message.message_id
-     # Error handling
-    if DST_LANG not in context.user_data:
-        await update.message.reply_text("Dst lang not set")
-        return
-    
-    if SRC_LANG not in context.user_data:
-        await update.message.reply_text("Src lang not set")
-        return
+    src = context.user_data[SRC_LANG]
+    dst = context.user_data[DST_LANG]
 
-    if is_signed(context.user_data[SRC_LANG]):
+    # Error handling
+    if is_signed(src) and is_signed(dst):
         await update.message.reply_text(
-            f"You want to translate from the signed language {context.user_data[SRC_LANG]}, so you must send a video, NOT audio!", 
+            MSG_SHOULD_BE_VIDEO_ERROR, 
             reply_to_message_id=msg_id
         )
         return
     
     # No errors detected
-    
-    if is_signed(context.user_data[DST_LANG]):
-        video = audio_to_sign(update.message.text)
-        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
-    else:
+
+    if not is_signed(src) and not is_signed(dst):
         text = audio_to_text(update.message.text)
         await update.message.reply_text(text, reply_to_message_id=msg_id)
+    elif not is_signed(src):
+        # Without swapping
+        video = audio_to_sign(update.message.text)
+        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
+    elif not is_signed(dst):
+        # Swapping
+        video = audio_to_sign(update.message.text)
+        await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 ### --- translation --- ###
 
