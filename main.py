@@ -5,6 +5,8 @@ import os
 import numpy as np
 import emoji
 import telegram
+import whisper
+
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
@@ -15,6 +17,8 @@ import lang_keyboard
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
+
+whisper_model = whisper.load_model('base')
 
 # Enable logging
 logging.basicConfig(
@@ -147,14 +151,14 @@ def text_to_sign(text: str) -> BufferedReader:
     video = open("./dummy/translation.mp4", "rb")
     return video
 
-def audio_to_sign(audio: BufferedReader) -> BufferedReader:
+def audio_to_sign(audio) -> BufferedReader:
     return text_to_sign("AUDIO_TO_SIGN_RESULT_PLACEHOLDER")
 
 def text_to_text(text: str) -> str:
     return f"TEXT_TO_TEXT_TRANSLATION_PLACEHOLDER\nOriginal text: {text}"
 
-def audio_to_text(audio: BufferedReader) -> str:
-    text = text_to_text("AUDIO_TO_TEXT_RESULT_PLACEHOLDER")
+def audio_to_text(audio) -> str:
+    text = whisper_model.transcribe(audio)
     return text
 
 def sign_to_text(video: BufferedReader) -> str:
@@ -233,17 +237,21 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
         return
     
     # No errors detected
+    file_info = await update.message.voice.get_file()
+    file_path = f"./voice/{file_info.file_unique_id}.ogg"
+    await file_info.download_to_drive(file_path)
+    audio_data = whisper.load_audio(file_path)
 
     if not is_signed(src) and not is_signed(dst):
-        text = audio_to_text(update.message.text)
+        text = audio_to_text(audio_data)
         await update.message.reply_text(text, reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
-        video = audio_to_sign(update.message.text)
+        video = audio_to_sign(audio_data)
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif not is_signed(dst):
         # Swapping
-        video = audio_to_sign(update.message.text)
+        video = audio_to_sign(audio_data)
         await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 ### --- translation --- ###
