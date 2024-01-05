@@ -6,6 +6,8 @@ import numpy as np
 import emoji
 import telegram
 import whisper
+import deepl
+from langdetect import detect as lang_detector
 
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
@@ -16,9 +18,12 @@ import lang_keyboard
 
 load_dotenv()
 
-TOKEN = os.getenv("TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+DEEPL_TOKEN = os.getenv("DEEPL_TOKEN")
+
 
 whisper_model = whisper.load_model('base')
+translator = deepl.Translator(DEEPL_TOKEN)
 
 # Enable logging
 logging.basicConfig(
@@ -154,12 +159,42 @@ def text_to_sign(text: str) -> BufferedReader:
 def audio_to_sign(audio) -> BufferedReader:
     return text_to_sign("AUDIO_TO_SIGN_RESULT_PLACEHOLDER")
 
-def text_to_text(text: str) -> str:
-    return f"TEXT_TO_TEXT_TRANSLATION_PLACEHOLDER\nOriginal text: {text}"
+def text_to_text(text: str, src_lang, target_lang) -> dict:
+    target_lang = LANGUAGE_DICT[target_lang]
+    src_lang = LANGUAGE_DICT[src_lang]
+    text_info = translator.translate_text(text, target_lang=target_lang)
+    detected_src = text_info.detected_source_lang.lower()
 
-def audio_to_text(audio) -> str:
-    text = whisper_model.transcribe(audio)
-    return text
+    should_swap_langs = detected_src == target_lang
+    if should_swap_langs:
+        target_lang = src_lang
+
+    translation = translator.translate_text(text, target_lang=target_lang)
+    return {
+        "translation": translation.text,
+        "detected_src": translation.detected_source_lang,
+        "is_swapped": should_swap_langs
+    }
+
+def audio_to_text(audio, src_lang, target_lang) -> dict:
+    target_lang = LANGUAGE_DICT[target_lang]
+    src_lang = LANGUAGE_DICT[src_lang]
+
+    print("Starting transcribing")
+    transcribe_info = whisper_model.transcribe(audio)
+    print("Done transcribing")
+    detected_src = transcribe_info["language"].lower()
+
+    should_swap_langs = detected_src == target_lang
+    if should_swap_langs:
+        target_lang = src_lang
+    
+    translation = translator.translate_text(transcribe_info["text"], source_lang=detected_src, target_lang=target_lang)
+    return {
+        "translation": translation.text,
+        "detected_src": detected_src,
+        "is_swapped": should_swap_langs
+    }
 
 def sign_to_text(video: BufferedReader) -> str:
     return "SIGN_TO_TEXT_TRANSLATION_PLACEHOLDER"
@@ -185,8 +220,9 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
     
     # No errors detected
     if not is_signed(src) and not is_signed(dst):
-        text = text_to_text(update.message.text)
-        await update.message.reply_text(text, reply_to_message_id=msg_id)
+        result = text_to_text(update.message.text, src, target_lang=dst)
+        print(result)
+        await update.message.reply_text(result["translation"], reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
         video = text_to_sign(update.message.text)
@@ -243,8 +279,9 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
     audio_data = whisper.load_audio(file_path)
 
     if not is_signed(src) and not is_signed(dst):
-        text = audio_to_text(audio_data)
-        await update.message.reply_text(text, reply_to_message_id=msg_id)
+        result = audio_to_text(audio_data, src, dst)
+        print(result)
+        await update.message.reply_text(result["translation"], reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
         video = audio_to_sign(audio_data)
@@ -282,7 +319,7 @@ async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYP
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(TOKEN).post_init(post_init).build()
+    application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))

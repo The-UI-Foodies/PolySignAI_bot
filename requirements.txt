@@ -4,3 +4,4 @@ numpy
 emoji
 deepl
 openai-whisper
+langdetect

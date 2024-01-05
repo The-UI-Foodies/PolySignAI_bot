@@ -72,3 +72,16 @@ KEYBOARD_LANG_LIST = [
     {"text": f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
     {"text": f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
 ]
+
+LANGUAGE_DICT = {
+    f"Italian {ITALIAN_FLAG_EMOJI}": "it",
+    f"English {ENGLISH_FLAG_EMOJI}": "en-us",
+    f"French {FRENCH_FLAG_EMOJI}": "fr",
+    f"German {GERMAN_FLAG_EMOJI}": "de",
+    f"Spanish {SPANISH_FLAG_EMOJI}": "es",
+    f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "lis",
+    f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "bsl",
+    f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "dgs",
+    f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "lse",
+    f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "asl",
+}
