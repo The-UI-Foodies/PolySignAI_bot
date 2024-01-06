@@ -5,3 +5,6 @@ emoji
 deepl
 openai-whisper
 langdetect
+pose-format
+opencv-python
+vidgear
