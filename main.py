@@ -8,6 +8,10 @@ import telegram
 import whisper
 import deepl
 from langdetect import detect as lang_detector
+import requests
+from pose_format import Pose
+from pose_format.pose_visualizer import PoseVisualizer
+from datetime import datetime
 
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
@@ -34,6 +38,29 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+# Requests utility function
+def build_url(base_url, params):
+    # Construct the full URL with parameters
+    return f"{base_url}?{'&'.join([f'{key}={value}' for key, value in params.items()])}"
+
+def perform_get_request(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        return response.content
+    except requests.exceptions.RequestException as e:
+        print(f"Error during GET request: {e}")
+        return None
+
+def pose_to_video(pose_bytes: bytes):
+    pose = Pose.read(pose_bytes)
+    v = PoseVisualizer(pose)
+    file_name = datetime.now().strftime("%Y_%m_%d_%H_%M_%S.mp4")
+    file_path = f"poses/{file_name}"
+    v.save_video(file_path, v.draw((0,0,0)))
+    return file_path
+
+
 def __init_user_data(context: ContextTypes.DEFAULT_TYPE):
     context.user_data[SRC_LANG] = KEYBOARD_LANG_LIST[1]["text"]
     context.user_data[DST_LANG] = KEYBOARD_LANG_LIST[5]["text"]
@@ -45,7 +72,7 @@ async def post_init(application: Application):
         BotCommand("swap", "Swap the source and destination languages"),
         BotCommand("lang", "Show the current source and destination languages")
     ])
-    
+
 
 # Define a few command handlers. These usually take the two arguments update and
 # context.
@@ -152,24 +179,42 @@ def is_signed(button_text: str):
         if button_text in obj.values():
             return not obj["is_spoken"]
 
-def text_to_sign(text: str) -> BufferedReader:
-    video = open("./dummy/translation.mp4", "rb")
+def text_to_sign(text: str, src_lang, target_lang) -> BufferedReader:
+    target_lang = LANGUAGE_DICT[target_lang]
+    src_lang = LANGUAGE_DICT[src_lang]
+
+    params = {
+        "text": text,
+        "spoken": src_lang,
+        #"spoken": "en" if src_lang == "en-us" else src_lang,
+        "signed": target_lang
+    }
+    pose_bytes = perform_get_request(build_url(TEXT_TO_SIGNED_BASE_URL, params))
+    pose_path = pose_to_video(pose_bytes)
+
+    video = open(pose_path, "rb")
     return video
 
-def audio_to_sign(audio) -> BufferedReader:
-    return text_to_sign("AUDIO_TO_SIGN_RESULT_PLACEHOLDER")
+def audio_to_sign(audio, src_lang, target_lang) -> BufferedReader:
+    print("Starting transcribing")
+    transcribe_info = whisper_model.transcribe(audio)
+    print("Done transcribing")
+    detected_src = transcribe_info["language"].lower()
+    # TODO: check if the the detected_src is the same as src_lang
+
+    return text_to_sign(transcribe_info["text"], LANGUAGE_DICT_REVERSED[detected_src], target_lang)
 
 def text_to_text(text: str, src_lang, target_lang) -> dict:
     target_lang = LANGUAGE_DICT[target_lang]
     src_lang = LANGUAGE_DICT[src_lang]
-    text_info = translator.translate_text(text, target_lang=target_lang)
+    text_info = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
     detected_src = text_info.detected_source_lang.lower()
 
     should_swap_langs = detected_src == target_lang
     if should_swap_langs:
         target_lang = src_lang
 
-    translation = translator.translate_text(text, target_lang=target_lang)
+    translation = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
     return {
         "translation": translation.text,
         "detected_src": translation.detected_source_lang,
@@ -189,7 +234,7 @@ def audio_to_text(audio, src_lang, target_lang) -> dict:
     if should_swap_langs:
         target_lang = src_lang
     
-    translation = translator.translate_text(transcribe_info["text"], source_lang=detected_src, target_lang=target_lang)
+    translation = translator.translate_text(transcribe_info["text"], source_lang=detected_src, target_lang="en-us" if target_lang == "en" else target_lang)
     return {
         "translation": translation.text,
         "detected_src": detected_src,
@@ -225,11 +270,11 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
         await update.message.reply_text(result["translation"], reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
-        video = text_to_sign(update.message.text)
+        video = text_to_sign(update.message.text, src,  dst)
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif not is_signed(dst):
         # Swapping
-        video = text_to_sign(update.message.text)
+        video = text_to_sign(update.message.text, dst, src)
         await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 async def video_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -284,11 +329,11 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
         await update.message.reply_text(result["translation"], reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
-        video = audio_to_sign(audio_data)
+        video = audio_to_sign(audio_data, src, dst)
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif not is_signed(dst):
         # Swapping
-        video = audio_to_sign(audio_data)
+        video = audio_to_sign(audio_data, dst, src)
         await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 ### --- translation --- ###

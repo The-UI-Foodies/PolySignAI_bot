@@ -60,6 +60,8 @@ SRC = "source"
 DST_LANG = "dst_lang"
 DST = "destination"
 
+TEXT_TO_SIGNED_BASE_URL = "https://us-central1-sign-mt.cloudfunctions.net/spoken_text_to_signed_pose"
+
 KEYBOARD_LANG_LIST = [
     {"text": f"Italian {ITALIAN_FLAG_EMOJI}", "is_spoken": True},
     {"text": f"English {ENGLISH_FLAG_EMOJI}", "is_spoken": True},
@@ -75,13 +77,26 @@ KEYBOARD_LANG_LIST = [
 
 LANGUAGE_DICT = {
     f"Italian {ITALIAN_FLAG_EMOJI}": "it",
-    f"English {ENGLISH_FLAG_EMOJI}": "en-us",
+    f"English {ENGLISH_FLAG_EMOJI}": "en",
     f"French {FRENCH_FLAG_EMOJI}": "fr",
     f"German {GERMAN_FLAG_EMOJI}": "de",
     f"Spanish {SPANISH_FLAG_EMOJI}": "es",
-    f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "lis",
-    f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "bsl",
-    f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "dgs",
-    f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "lse",
-    f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "asl",
+    f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "ise", # This "language code" is used by sign.mt API
+    f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "bfi",
+    f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "gsg",
+    f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "ssp",
+    f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "ase",
+}
+
+LANGUAGE_DICT_REVERSED = {
+    "it": f"Italian {ITALIAN_FLAG_EMOJI}",
+    "en": f"English {ENGLISH_FLAG_EMOJI}",
+    "fr": f"French {FRENCH_FLAG_EMOJI}",
+    "de": f"German {GERMAN_FLAG_EMOJI}",
+    "es": f"Spanish {SPANISH_FLAG_EMOJI}",
+    "ise": f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
+    "bfi": f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
+    "gsg": f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
+    "ssp": f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
+    "ase": f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
 }

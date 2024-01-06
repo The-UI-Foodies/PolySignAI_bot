@@ -8,3 +8,4 @@ langdetect
 pose-format
 opencv-python
 vidgear
+requests
