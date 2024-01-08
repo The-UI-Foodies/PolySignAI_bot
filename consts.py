@@ -34,6 +34,12 @@ LANG_DONE_MESSAGE = "LANG_DONE_MESSAGE_PLACEHOLDER"
 MSG_SHOULD_BE_VIDEO_ERROR = "MSG_SHOULD_BE_VIDEO_ERROR"
 MSG_SHOULD_BE_TEXT_ERROR = "MSG_SHOULD_BE_TEXT_ERROR"
 
+MSG_WHISPER_UNABLE_TO_TRANSCRIBE = "MSG_WHISPER_UNABLE_TO_TRANSCRIBE"
+MSG_WHISPER_FAIL = "MSG_WHISPER_FAIL"
+MSG_DEEPL_FAIL = "MSG_DEEPL_FAIL"
+MSG_SIGNMT_FAIL = "MSG_SIGNMT_FAIL"
+MSG_POSE_FAIL = "MSG_POSE_FAIL"
+
 # If you want to add some task, you gotta add form the last position
 TASKS = ["SELECT_LANGUAGE_DST", "SELECT_LANGUAGE_SRC"]
 
@@ -59,6 +65,9 @@ SRC = "source"
 
 DST_LANG = "dst_lang"
 DST = "destination"
+
+# Error list
+
 
 TEXT_TO_SIGNED_BASE_URL = "https://us-central1-sign-mt.cloudfunctions.net/spoken_text_to_signed_pose"
 
@@ -100,6 +109,8 @@ LANGUAGE_DICT_REVERSED = {
     "ssp": f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
     "ase": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
 }
+
+SUPPORTED_LANGUAGES = LANGUAGE_DICT.keys()
 
 SENTENCES = [
     "The quick brown fox jumps over the lazy dog.",

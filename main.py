@@ -180,62 +180,111 @@ def is_signed(button_text: str):
         if button_text in obj.values():
             return not obj["is_spoken"]
 
-def text_to_sign(text: str, src_lang, target_lang) -> BufferedReader:
+async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> BufferedReader:
     target_lang = LANGUAGE_DICT[target_lang]
     src_lang = LANGUAGE_DICT[src_lang]
 
     params = {
         "text": text,
         "spoken": src_lang,
-        #"spoken": "en" if src_lang == "en-us" else src_lang,
         "signed": target_lang
     }
+
     pose_bytes = perform_get_request(build_url(TEXT_TO_SIGNED_BASE_URL, params))
-    pose_path = pose_to_video(pose_bytes)
+    if pose_bytes == None:
+        await update.message.reply_text(text=MSG_SIGNMT_FAIL, reply_to_message_id=update.message.id)
+        return
+    
+    try:
+        pose_path = pose_to_video(pose_bytes)
+    except Exception as e:
+        print(f"Pose fail: {e}")
+        await update.message.reply_text(text=MSG_POSE_FAIL, reply_to_message_id=update.message.id)
+        return
+
 
     video = open(pose_path, "rb")
     return video
 
-def audio_to_sign(audio, src_lang, target_lang) -> BufferedReader:
-    print("Starting transcribing")
-    transcribe_info = whisper_model.transcribe(audio)
-    print("Done transcribing")
+async def audio_to_sign(update: Update, audio, src_lang, target_lang) -> BufferedReader:
+    try:
+        print("Starting transcribing")
+        transcribe_info = whisper_model.transcribe(audio)
+        print("Done transcribing")
+    except Exception as e:
+        print(f"Whisper fail: {e}")
+        await update.message.reply_text(text=MSG_WHISPER_FAIL, reply_to_message_id=update.message.id)
+        return
+
+    if transcribe_info["text"] == "":
+        await update.message.reply_text(text=MSG_WHISPER_UNABLE_TO_TRANSCRIBE, reply_to_message_id=update.message.id)
+        return
+    
     detected_src = transcribe_info["language"].lower()
     # TODO: check if the the detected_src is the same as src_lang
 
     return text_to_sign(transcribe_info["text"], LANGUAGE_DICT_REVERSED[detected_src], target_lang)
 
-def text_to_text(text: str, src_lang, target_lang) -> dict:
+async def text_to_text(update: Update, text: str, src_lang, target_lang) -> dict:
     target_lang = LANGUAGE_DICT[target_lang]
     src_lang = LANGUAGE_DICT[src_lang]
-    text_info = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
+
+    try:
+        text_info = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
+    except Exception as e:
+        print(f"DeepL fail: {e}")
+        await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
+        return
+    
     detected_src = text_info.detected_source_lang.lower()
 
     should_swap_langs = detected_src == target_lang
     if should_swap_langs:
         target_lang = src_lang
 
-    translation = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
+    try:
+        translation = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
+    except Exception as e:
+        print(f"DeepL fail: {e}")
+        await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
+        return
+    
     return {
         "translation": translation.text,
         "detected_src": translation.detected_source_lang,
         "is_swapped": should_swap_langs
     }
 
-def audio_to_text(audio, src_lang, target_lang) -> dict:
+async def audio_to_text(update: Update, audio, src_lang, target_lang) -> dict:
     target_lang = LANGUAGE_DICT[target_lang]
     src_lang = LANGUAGE_DICT[src_lang]
 
-    print("Starting transcribing")
-    transcribe_info = whisper_model.transcribe(audio)
-    print("Done transcribing")
+    try:
+        print("Starting transcribing")
+        transcribe_info = whisper_model.transcribe(audio)
+        print("Done transcribing")
+    except Exception as e:
+        print(f"Whisper fail: {e}")
+        await update.message.reply_text(text=MSG_WHISPER_FAIL, reply_to_message_id=update.message.id)
+        return
+    
+    if transcribe_info["text"] == "":
+        await update.message.reply_text(text=MSG_WHISPER_UNABLE_TO_TRANSCRIBE, reply_to_message_id=update.message.id)
+        return
+        
     detected_src = transcribe_info["language"].lower()
 
     should_swap_langs = detected_src == target_lang
     if should_swap_langs:
         target_lang = src_lang
     
-    translation = translator.translate_text(transcribe_info["text"], source_lang=detected_src, target_lang="en-us" if target_lang == "en" else target_lang)
+    try:
+        translation = translator.translate_text(transcribe_info["text"], source_lang=detected_src, target_lang="en-us" if target_lang == "en" else target_lang)
+    except Exception as e:
+        print(f"DeepL fail: {e}")
+        await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
+        return
+    
     return {
         "translation": translation.text,
         "detected_src": detected_src,
@@ -271,16 +320,22 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
     
     # No errors detected
     if not is_signed(src) and not is_signed(dst):
-        result = text_to_text(update.message.text, src, target_lang=dst)
+        result = await text_to_text(update, update.message.text, src, target_lang=dst)
+        if result == None:
+            return
         print(result)
         await update.message.reply_text(result["translation"], reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
-        video = text_to_sign(update.message.text, src,  dst)
+        video = await text_to_sign(update, update.message.text, src,  dst)
+        if video == None:
+            return
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif not is_signed(dst):
         # Swapping
-        video = text_to_sign(update.message.text, dst, src)
+        video = await text_to_sign(update, update.message.text, dst, src)
+        if video == None:
+            return
         await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 async def video_translation_entry_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -335,16 +390,22 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
     audio_data = whisper.load_audio(file_path)
 
     if not is_signed(src) and not is_signed(dst):
-        result = audio_to_text(audio_data, src, dst)
+        result = await audio_to_text(update, audio_data, src, dst)
         print(result)
+        if result == None:
+            return
         await update.message.reply_text(result["translation"], reply_to_message_id=msg_id)
     elif not is_signed(src):
         # Without swapping
-        video = audio_to_sign(audio_data, src, dst)
+        video = await audio_to_sign(update, audio_data, src, dst)
+        if video == None:
+            return
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif not is_signed(dst):
         # Swapping
-        video = audio_to_sign(audio_data, dst, src)
+        video = await audio_to_sign(update, audio_data, dst, src)
+        if video == None:
+            return
         await update.message.reply_video(video, reply_to_message_id=msg_id)
 
 ### --- translation --- ###
