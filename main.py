@@ -12,6 +12,7 @@ import requests
 from pose_format import Pose
 from pose_format.pose_visualizer import PoseVisualizer
 from datetime import datetime
+import random
 
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
@@ -241,12 +242,17 @@ def audio_to_text(audio, src_lang, target_lang) -> dict:
         "is_swapped": should_swap_langs
     }
 
-def sign_to_text(video: BufferedReader) -> str:
-    return "SIGN_TO_TEXT_TRANSLATION_PLACEHOLDER"
+def sign_to_text(video_path, src_lang, target_lang) -> str:
+    target_lang = LANGUAGE_DICT[target_lang]
+    src_lang = LANGUAGE_DICT[src_lang]
 
-def sign_to_sign(video: BufferedReader) -> BufferedReader:
-    text = sign_to_text(video)
-    video = text_to_sign(text)
+    text = random.choice(SENTENCES)
+    translation = translator.translate_text(text, source_lang="en", target_lang="en-us" if target_lang == "en" else target_lang)
+    return translation.text
+
+def sign_to_sign(video_path, src_lang, target_lang) -> BufferedReader:
+    text = sign_to_text(video_path, src_lang, f"Italian {ITALIAN_FLAG_EMOJI}")
+    video = text_to_sign(text, f"Italian {ITALIAN_FLAG_EMOJI}", target_lang)
     return video
 
 
@@ -291,16 +297,21 @@ async def video_translation_entry_point(update: Update, context: ContextTypes.DE
         return
 
     # No errors detected
+    file_info = await update.message.video_note.get_file()
+    file_path = f"./video/{file_info.file_unique_id}.mp4"
+    await file_info.download_to_drive(file_path)
+
+    # No errors detected
     if is_signed(src) and is_signed(dst):
-        video = sign_to_sign(update.message.text)
+        video = sign_to_sign(file_path, src, dst)
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif is_signed(src):
         # Without swapping
-        text = sign_to_text(update.message.text)
+        text = sign_to_text(file_path, src, dst)
         await update.message.reply_text(text, reply_to_message_id=msg_id)
     elif is_signed(dst):
         # Swapping
-        text = sign_to_text(update.message.text)
+        text = sign_to_text(file_path, dst, src)
         await update.message.reply_text(text, reply_to_message_id=msg_id)
     
 

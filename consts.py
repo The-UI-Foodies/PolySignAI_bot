@@ -68,11 +68,11 @@ KEYBOARD_LANG_LIST = [
     {"text": f"French {FRENCH_FLAG_EMOJI}", "is_spoken": True},
     {"text": f"German {GERMAN_FLAG_EMOJI}", "is_spoken": True},
     {"text": f"Spanish {SPANISH_FLAG_EMOJI}", "is_spoken": True},
-    {"text": f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
-    {"text": f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
-    {"text": f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
-    {"text": f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
-    {"text": f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"British Sign Lang{ENGLISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
 ]
 
 LANGUAGE_DICT = {
@@ -81,11 +81,11 @@ LANGUAGE_DICT = {
     f"French {FRENCH_FLAG_EMOJI}": "fr",
     f"German {GERMAN_FLAG_EMOJI}": "de",
     f"Spanish {SPANISH_FLAG_EMOJI}": "es",
-    f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "ise", # This "language code" is used by sign.mt API
-    f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "bfi",
-    f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "gsg",
-    f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "ssp",
-    f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}": "ase",
+    f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "ise", # This "language code" is used by sign.mt API
+    f"British Sign Lang{ENGLISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "bfi",
+    f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "gsg",
+    f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "ssp",
+    f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "ase",
 }
 
 LANGUAGE_DICT_REVERSED = {
@@ -94,9 +94,32 @@ LANGUAGE_DICT_REVERSED = {
     "fr": f"French {FRENCH_FLAG_EMOJI}",
     "de": f"German {GERMAN_FLAG_EMOJI}",
     "es": f"Spanish {SPANISH_FLAG_EMOJI}",
-    "ise": f"Italian Sign Language (LIS) {ITALIAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    "bfi": f"British Sign Language (BSL) {ENGLISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    "gsg": f"German Sign Language (DGS) {GERMAN_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    "ssp": f"Spanish Sign Language (LSE) {SPANISH_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
-    "ase": f"American Sign Language (ASL) {US_FLAG_EMOJI} {OPEN_HANDS_EMOJI}",
+    "ise": f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    "bfi": f"British Sign Lang{ENGLISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    "gsg": f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    "ssp": f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    "ase": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
 }
+
+SENTENCES = [
+    "The quick brown fox jumps over the lazy dog.",
+    "A journey of a thousand miles begins with a single step.",
+    "Actions speak louder than words.",
+    "Where there's smoke, there's fire.",
+    "Every cloud has a silver lining.",
+    "Don't count your chickens before they hatch.",
+    "All that glitters is not gold.",
+    "The early bird catches the worm.",
+    "When in Rome, do as the Romans do.",
+    "Two wrongs don't make a right.",
+    "Better late than never.",
+    "A picture is worth a thousand words.",
+    "You can't judge a book by its cover.",
+    "When the going gets tough, the tough get going.",
+    "Honesty is the best policy.",
+    "The pen is mightier than the sword.",
+    "Actions speak louder than words.",
+    "Where there is a will, there is a way.",
+    "Fortune favors the bold.",
+    "Rome wasn't built in a day."
+]
