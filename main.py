@@ -23,8 +23,10 @@ import lang_keyboard
 
 from rich import print
 
-def get_current_timestamp():
-    datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+import iso639
+
+def _get_current_timestamp():
+    return datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 
 load_dotenv()
 
@@ -44,19 +46,25 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+def _get_lang_name(part1_iso_code: str) -> str:
+    return iso639.Language.from_part1(part1_iso_code).name
+
 # Requests utility function
 def build_url(base_url, params):
     # Construct the full URL with parameters
     return f"{base_url}?{'&'.join([f'{key}={value}' for key, value in params.items()])}"
 
-def perform_get_request(url):
+async def perform_get_request(update: Update, url):
     try:
+        await update.message.reply_text(
+            f"Translating sign language... {SL_TRANSLATION_EMOJI}", reply_to_message_id=update.message.message_id
+        )
         response = requests.get(url)
         response.raise_for_status()  # Raise an HTTPError for bad responses
-        print(f"[perform_get_request @ {get_current_timestamp()}] GET request response: response")
+        print(f"[perform_get_request @ {_get_current_timestamp()}] GET request response: response")
         return response.content
     except requests.exceptions.RequestException as e:
-        print(f"[perform_get_request @ {get_current_timestamp()}] Error during GET request: {e}")
+        print(f"[perform_get_request @ {_get_current_timestamp()}] Error during GET request: {e}")
         return None
 
 def pose_to_video(pose_bytes: bytes):
@@ -99,7 +107,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def lang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = lang_keyboard.build_keyboard(context.user_data[SRC_LANG], context.user_data[DST_LANG])
-    await update.message.reply_text(LANG_MESSAGE, reply_markup=keyboard)
+    await update.message.reply_text(MSG_SET_LANG, reply_markup=keyboard)
 
 async def swap_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -132,7 +140,7 @@ async def done_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     src, dst = lang_keyboard.get_selected_from_keyboard(update.callback_query.message.reply_markup)
     context.user_data[SRC_LANG] = src
     context.user_data[DST_LANG] = dst
-    await query.edit_message_text(LANG_DONE_MESSAGE, reply_markup=None)
+    await query.edit_message_text(MSG_LANG_SET.format(src, dst), reply_markup=None)
     return await query.answer()
 
 ### --- lang --- ###
@@ -195,11 +203,21 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
         # which obviously is NOT supported by DeepL
         text_info = translator.translate_text(text, target_lang="en-us" if src_lang == "en" else src_lang)
     except Exception as e:
-        print(f"[text_to_sign @ {get_current_timestamp()}] DeepL fail: {e}")
+        print(f"[text_to_sign @ {_get_current_timestamp()}] DeepL fail: {e}")
         await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
         return
     
     detected_src = text_info.detected_source_lang.lower()
+
+    print(f"\[text_to_sign @ {_get_current_timestamp()}] detected src: {detected_src}")
+
+    if detected_src not in SUPPORTED_LANGUAGES_ISO_CODES:
+        await update.message.reply_text(
+            f"Please excuse us, {_get_lang_name(detected_src)} language is not supported yet in signed language translations... {SAD_EMOJI}\n" \
+                f"Please register an audio speaking one of the following languages: {SUPPORTED_LANGUAGES_STR}", 
+            reply_to_message_id=update.message.message_id
+        )
+        return
 
     params = {
         "text": text,
@@ -207,7 +225,7 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
         "signed": target_lang
     }
 
-    pose_bytes = perform_get_request(build_url(TEXT_TO_SIGNED_BASE_URL, params))
+    pose_bytes = await perform_get_request(update, build_url(TEXT_TO_SIGNED_BASE_URL, params))
     if pose_bytes == None:
         await update.message.reply_text(text=MSG_SIGNMT_FAIL, reply_to_message_id=update.message.id)
         return
@@ -218,7 +236,7 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
         )
         pose_path = pose_to_video(pose_bytes)
     except Exception as e:
-        print(f"[text_to_sign @ {get_current_timestamp()}] Pose fail: {e}")
+        print(f"[text_to_sign @ {_get_current_timestamp()}] Pose fail: {e}")
         await update.message.reply_text(text=MSG_POSE_FAIL, reply_to_message_id=update.message.id)
         return
 
@@ -228,14 +246,15 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
 
 async def audio_to_sign(update: Update, audio, src_lang, target_lang) -> BufferedReader:
     try:
-        print(f"[audio_to_sign @ {get_current_timestamp()}] Starting transcribing")
+        print(f"\[audio_to_sign @ {_get_current_timestamp()}] Starting transcribing")
         await update.message.reply_text(
             f"Transcribing audio... {TRANSCRIBING_EMOJI}", reply_to_message_id=update.message.message_id
         )
         transcribe_info = whisper_model.transcribe(audio)
-        print(f"[audio_to_sign @ {get_current_timestamp()}] Done transcribing")
+        print(f"\[audio_to_sign @ {_get_current_timestamp()}] Done transcribing")
+        
     except Exception as e:
-        print(f"[audio_to_sign @ {get_current_timestamp()}] Whisper fail: {e}")
+        print(f"\[audio_to_sign @ {_get_current_timestamp()}] Whisper fail: {e}")
         await update.message.reply_text(text=MSG_WHISPER_FAIL, reply_to_message_id=update.message.id)
         return
 
@@ -243,9 +262,20 @@ async def audio_to_sign(update: Update, audio, src_lang, target_lang) -> Buffere
         await update.message.reply_text(text=MSG_WHISPER_UNABLE_TO_TRANSCRIBE, reply_to_message_id=update.message.id)
         return
     
+    print(f"\[audio_to_sign @ {_get_current_timestamp()}] transcribed audio: {transcribe_info['text']}")
+    
     detected_src = transcribe_info["language"].lower()
     # TODO: check if the the detected_src is the same as src_lang
     # if the user sets a src_lang but then inputs in another lang... do we warn them or not?
+    print(f"\[audio_to_sign @ {_get_current_timestamp()}] detected src     : {detected_src}")
+
+    if detected_src not in SUPPORTED_LANGUAGES_ISO_CODES:
+        await update.message.reply_text(
+            f"Please excuse us, {_get_lang_name(detected_src)} language is not supported yet in signed language translations... {SAD_EMOJI}\n" \
+                f"Please register an audio speaking one of the following languages: {SUPPORTED_LANGUAGES_STR}", 
+            reply_to_message_id=update.message.message_id
+        )
+        return
 
     return await text_to_sign(update, transcribe_info["text"], LANGUAGE_DICT_REVERSED[detected_src], target_lang)
 
@@ -256,7 +286,7 @@ async def text_to_text(update: Update, text: str, src_lang, target_lang) -> dict
     try:
         text_info = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
     except Exception as e:
-        print(f"[text_to_text @ {get_current_timestamp()}] DeepL fail: {e}")
+        print(f"[text_to_text @ {_get_current_timestamp()}] DeepL fail: {e}")
         await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
         return
     
@@ -269,7 +299,7 @@ async def text_to_text(update: Update, text: str, src_lang, target_lang) -> dict
     try:
         translation = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
     except Exception as e:
-        print(f"[text_to_text @ {get_current_timestamp()}] DeepL fail: {e}")
+        print(f"[text_to_text @ {_get_current_timestamp()}] DeepL fail: {e}")
         await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
         return
     
@@ -284,14 +314,14 @@ async def audio_to_text(update: Update, audio, src_lang, target_lang) -> dict:
     src_lang = LANGUAGE_DICT[src_lang]
 
     try:
-        print(f"[audio_to_text @ {get_current_timestamp()}] Starting transcribing")
+        print(f"[audio_to_text @ {_get_current_timestamp()}] Starting transcribing")
         await update.message.reply_text(
             f"Transcribing audio... {TRANSCRIBING_EMOJI}", reply_to_message_id=update.message.message_id
         )
         transcribe_info = whisper_model.transcribe(audio)
-        print(f"[audio_to_text @ {get_current_timestamp()}] Done transcribing")
+        print(f"[audio_to_text @ {_get_current_timestamp()}] Done transcribing")
     except Exception as e:
-        print(f"[audio_to_text @ {get_current_timestamp()}] Whisper fail: {e}")
+        print(f"[audio_to_text @ {_get_current_timestamp()}] Whisper fail: {e}")
         await update.message.reply_text(text=MSG_WHISPER_FAIL, reply_to_message_id=update.message.id)
         return
 
@@ -300,6 +330,17 @@ async def audio_to_text(update: Update, audio, src_lang, target_lang) -> dict:
         return
         
     detected_src = transcribe_info["language"].lower()
+
+    print(f"\[audio_to_text @ {_get_current_timestamp()}] transcribed audio: {transcribe_info['text']}")
+    print(f"\[audio_to_text @ {_get_current_timestamp()}] detected src     : {detected_src}")
+
+    if detected_src not in SUPPORTED_LANGUAGES_DEEPL_ISO_CODES:
+        await update.message.reply_text(
+            f"Please excuse us, {_get_lang_name(detected_src)} language is not supported yet in spoken language translations... {SAD_EMOJI_2}\n" \
+                f"Please register an audio speaking one of the following languages: {SUPPORTED_LANGUAGES_STR}", 
+            reply_to_message_id=update.message.message_id
+        )
+        return
 
     should_swap_langs = detected_src == target_lang
     if should_swap_langs:
@@ -326,9 +367,9 @@ def sign_to_text(video_path, src_lang, target_lang) -> str:
     translation = translator.translate_text(text, source_lang="en", target_lang="en-us" if target_lang == "en" else target_lang)
     return translation.text
 
-def sign_to_sign(video_path, src_lang, target_lang) -> BufferedReader:
+async def sign_to_sign(update: Update, video_path, src_lang, target_lang) -> BufferedReader:
     text = sign_to_text(video_path, src_lang, f"Italian {ITALIAN_FLAG_EMOJI}")
-    video = text_to_sign(text, f"Italian {ITALIAN_FLAG_EMOJI}", target_lang)
+    video = await text_to_sign(update, text, f"Italian {ITALIAN_FLAG_EMOJI}", target_lang)
     return video
 
 
@@ -340,7 +381,7 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
     # Error handling
     if is_signed(src) and is_signed(dst):
         await update.message.reply_text(
-            MSG_SHOULD_BE_VIDEO_ERROR, 
+            MSG_SHOULD_BE_VIDEO_ERROR.format(src), 
             reply_to_message_id=msg_id
         )
         return
@@ -373,7 +414,7 @@ async def video_translation_entry_point(update: Update, context: ContextTypes.DE
     # Error handling
     if (not is_signed(src)) and (not is_signed(dst)):
         await update.message.reply_text(
-            MSG_SHOULD_BE_TEXT_ERROR, 
+            MSG_SHOULD_BE_TEXT_ERROR.format(src), 
             reply_to_message_id=msg_id
         )
         return
@@ -385,7 +426,7 @@ async def video_translation_entry_point(update: Update, context: ContextTypes.DE
 
     # No errors detected
     if is_signed(src) and is_signed(dst):
-        video = sign_to_sign(file_path, src, dst)
+        video = await sign_to_sign(update, file_path, src, dst)
         await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
     elif is_signed(src):
         # Without swapping
@@ -405,7 +446,7 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
     # Error handling
     if is_signed(src) and is_signed(dst):
         await update.message.reply_text(
-            MSG_SHOULD_BE_VIDEO_ERROR, 
+            MSG_SHOULD_BE_VIDEO_ERROR.format(src), 
             reply_to_message_id=msg_id
         )
         return

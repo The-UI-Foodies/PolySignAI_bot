@@ -10,3 +10,4 @@ opencv-python
 vidgear
 requests
 rich
+python-iso639

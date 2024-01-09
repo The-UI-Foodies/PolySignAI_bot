@@ -1,3 +1,5 @@
+import iso639
+
 # TODO update it with our command!
 
 REQUIRED_DIRS = ["poses", "voice", "video"]
@@ -30,11 +32,16 @@ This bot can translate text, audio, and video between multiple signed and spolen
 - To translate a video of a lecture from German to Chinese, send the video message.
 """
 
-LANG_MESSAGE = "LANG_MESSAGE_PLACEHOLDER"
-LANG_DONE_MESSAGE = "LANG_DONE_MESSAGE_PLACEHOLDER"
+OK_EMOJI = "\u2705"
+GENIE_EMOJI = "\U0001f9de\u200D\u2642\uFE0F"
 
-MSG_SHOULD_BE_VIDEO_ERROR = "MSG_SHOULD_BE_VIDEO_ERROR"
-MSG_SHOULD_BE_TEXT_ERROR = "MSG_SHOULD_BE_TEXT_ERROR"
+MSG_SET_LANG = f"{GENIE_EMOJI} Please select a source (left) and destination (right) language by tapping on the appropriate buttons. {GENIE_EMOJI}"
+MSG_LANG_SET = OK_EMOJI + "\nFrom now on, the bot will translate from {0} to {1}"
+
+ERROR_EMOJI = "\u274C"
+
+MSG_SHOULD_BE_VIDEO_ERROR = ERROR_EMOJI + " Selected {0} source language requires to translate from a video!"
+MSG_SHOULD_BE_TEXT_ERROR = ERROR_EMOJI + " Selected {0} source language requires to translate from an audio or a text!"
 
 MSG_WHISPER_UNABLE_TO_TRANSCRIBE = "MSG_WHISPER_UNABLE_TO_TRANSCRIBE"
 MSG_WHISPER_FAIL = "MSG_WHISPER_FAIL"
@@ -59,6 +66,10 @@ OPEN_HANDS_EMOJI = "\U0001f450"
 HOURGLASS_EMOJI = "\u23F3"
 
 TRANSCRIBING_EMOJI = "\u270D\U0001f3fb"
+
+SL_TRANSLATION_EMOJI = "\U0001f90c\U0001f3fc"
+SAD_EMOJI = "\u2639\uFE0F"
+SAD_EMOJI_2 = "\U0001f614"
 
 SRC_TASK_TO_START = "source language selection"
 DST_TASK_TO_START = "destination language selection"
@@ -116,7 +127,16 @@ LANGUAGE_DICT_REVERSED = {
     "ase": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
 }
 
-SUPPORTED_LANGUAGES = LANGUAGE_DICT.keys()
+SUPPORTED_LANGUAGES_ISO_CODES = list(LANGUAGE_DICT_REVERSED.keys())
+SUPPORTED_LANGUAGES_ISO_NAME = list(LANGUAGE_DICT.keys())[:5] # showing only spoken languages, NOT signed ones
+SUPPORTED_LANGUAGES_STR = ", ".join(SUPPORTED_LANGUAGES_ISO_NAME)
+
+SUPPORTED_LANGUAGES_DEEPL_ISO_CODES = [
+    'bg', 'cs', 'da', 'de', 'el', 'en', 'es', 'et', 'fi', 'fr', 'hu', 'id', 
+    'it', 'ja', 'ko', 'lt', 'lv', 'nb', 'nl', 'pl', 'pt', 'ro', 'ru', 'sk', 
+    'sl', 'sv', 'tr', 'uk', 'zh'
+]
+
 
 SENTENCES = [
     "The quick brown fox jumps over the lazy dog.",
