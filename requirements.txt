@@ -9,3 +9,4 @@ pose-format
 opencv-python
 vidgear
 requests
+rich

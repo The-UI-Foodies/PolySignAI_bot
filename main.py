@@ -21,6 +21,11 @@ from dotenv import load_dotenv
 
 import lang_keyboard
 
+from rich import print
+
+def get_current_timestamp():
+    datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -48,9 +53,10 @@ def perform_get_request(url):
     try:
         response = requests.get(url)
         response.raise_for_status()  # Raise an HTTPError for bad responses
+        print(f"[perform_get_request @ {get_current_timestamp()}] GET request response: response")
         return response.content
     except requests.exceptions.RequestException as e:
-        print(f"Error during GET request: {e}")
+        print(f"[perform_get_request @ {get_current_timestamp()}] Error during GET request: {e}")
         return None
 
 def pose_to_video(pose_bytes: bytes):
@@ -184,9 +190,20 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
     target_lang = LANGUAGE_DICT[target_lang]
     src_lang = LANGUAGE_DICT[src_lang]
 
+    try:
+        # passing src_lang as translation target language because in text_to_sign we have a signed target language
+        # which obviously is NOT supported by DeepL
+        text_info = translator.translate_text(text, target_lang="en-us" if src_lang == "en" else src_lang)
+    except Exception as e:
+        print(f"[text_to_sign @ {get_current_timestamp()}] DeepL fail: {e}")
+        await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
+        return
+    
+    detected_src = text_info.detected_source_lang.lower()
+
     params = {
         "text": text,
-        "spoken": src_lang,
+        "spoken": detected_src,
         "signed": target_lang
     }
 
@@ -196,9 +213,12 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
         return
     
     try:
+        await update.message.reply_text(
+            f"Creating sign language video... {HOURGLASS_EMOJI}", reply_to_message_id=update.message.message_id
+        )
         pose_path = pose_to_video(pose_bytes)
     except Exception as e:
-        print(f"Pose fail: {e}")
+        print(f"[text_to_sign @ {get_current_timestamp()}] Pose fail: {e}")
         await update.message.reply_text(text=MSG_POSE_FAIL, reply_to_message_id=update.message.id)
         return
 
@@ -208,11 +228,14 @@ async def text_to_sign(update: Update, text: str, src_lang, target_lang) -> Buff
 
 async def audio_to_sign(update: Update, audio, src_lang, target_lang) -> BufferedReader:
     try:
-        print("Starting transcribing")
+        print(f"[audio_to_sign @ {get_current_timestamp()}] Starting transcribing")
+        await update.message.reply_text(
+            f"Transcribing audio... {TRANSCRIBING_EMOJI}", reply_to_message_id=update.message.message_id
+        )
         transcribe_info = whisper_model.transcribe(audio)
-        print("Done transcribing")
+        print(f"[audio_to_sign @ {get_current_timestamp()}] Done transcribing")
     except Exception as e:
-        print(f"Whisper fail: {e}")
+        print(f"[audio_to_sign @ {get_current_timestamp()}] Whisper fail: {e}")
         await update.message.reply_text(text=MSG_WHISPER_FAIL, reply_to_message_id=update.message.id)
         return
 
@@ -222,8 +245,9 @@ async def audio_to_sign(update: Update, audio, src_lang, target_lang) -> Buffere
     
     detected_src = transcribe_info["language"].lower()
     # TODO: check if the the detected_src is the same as src_lang
+    # if the user sets a src_lang but then inputs in another lang... do we warn them or not?
 
-    return text_to_sign(transcribe_info["text"], LANGUAGE_DICT_REVERSED[detected_src], target_lang)
+    return await text_to_sign(update, transcribe_info["text"], LANGUAGE_DICT_REVERSED[detected_src], target_lang)
 
 async def text_to_text(update: Update, text: str, src_lang, target_lang) -> dict:
     target_lang = LANGUAGE_DICT[target_lang]
@@ -232,7 +256,7 @@ async def text_to_text(update: Update, text: str, src_lang, target_lang) -> dict
     try:
         text_info = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
     except Exception as e:
-        print(f"DeepL fail: {e}")
+        print(f"[text_to_text @ {get_current_timestamp()}] DeepL fail: {e}")
         await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
         return
     
@@ -245,7 +269,7 @@ async def text_to_text(update: Update, text: str, src_lang, target_lang) -> dict
     try:
         translation = translator.translate_text(text, target_lang="en-us" if target_lang == "en" else target_lang)
     except Exception as e:
-        print(f"DeepL fail: {e}")
+        print(f"[text_to_text @ {get_current_timestamp()}] DeepL fail: {e}")
         await update.message.reply_text(text=MSG_DEEPL_FAIL, reply_to_message_id=update.message.id)
         return
     
@@ -260,14 +284,17 @@ async def audio_to_text(update: Update, audio, src_lang, target_lang) -> dict:
     src_lang = LANGUAGE_DICT[src_lang]
 
     try:
-        print("Starting transcribing")
+        print(f"[audio_to_text @ {get_current_timestamp()}] Starting transcribing")
+        await update.message.reply_text(
+            f"Transcribing audio... {TRANSCRIBING_EMOJI}", reply_to_message_id=update.message.message_id
+        )
         transcribe_info = whisper_model.transcribe(audio)
-        print("Done transcribing")
+        print(f"[audio_to_text @ {get_current_timestamp()}] Done transcribing")
     except Exception as e:
-        print(f"Whisper fail: {e}")
+        print(f"[audio_to_text @ {get_current_timestamp()}] Whisper fail: {e}")
         await update.message.reply_text(text=MSG_WHISPER_FAIL, reply_to_message_id=update.message.id)
         return
-    
+
     if transcribe_info["text"] == "":
         await update.message.reply_text(text=MSG_WHISPER_UNABLE_TO_TRANSCRIBE, reply_to_message_id=update.message.id)
         return
@@ -433,7 +460,15 @@ async def detect_wrong_command(update: Update, context: ContextTypes.DEFAULT_TYP
         reply_to_message_id=update.message.message_id
         )
 
+def _create_required_dirs():
+    
+    for dir in REQUIRED_DIRS:
+        os.makedirs(dir, exist_ok=True)
+
 def main() -> None:
+
+    _create_required_dirs()
+
     """Start the bot."""
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()

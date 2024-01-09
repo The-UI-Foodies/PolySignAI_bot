@@ -1,5 +1,7 @@
 # TODO update it with our command!
 
+REQUIRED_DIRS = ["poses", "voice", "video"]
+
 WELCOME_MESSAGE = "Welcome to PolySignAI!"
 
 HELP_MESSAGE = """
@@ -53,6 +55,10 @@ SPANISH_FLAG_EMOJI = "\U0001f1ea\U0001f1f8"
 US_FLAG_EMOJI      = "\U0001f1fa\U0001f1f8"
 
 OPEN_HANDS_EMOJI = "\U0001f450"
+
+HOURGLASS_EMOJI = "\u23F3"
+
+TRANSCRIBING_EMOJI = "\u270D\U0001f3fb"
 
 SRC_TASK_TO_START = "source language selection"
 DST_TASK_TO_START = "destination language selection"
