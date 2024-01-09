@@ -166,8 +166,10 @@ SENTENCES = [
 
 HI_HAND = "\U0001f596\U0001f3fc"
 HEART_EMOJI = "\U0001f9e1"
+HUGGING_FACE_EMOJI = "\U0001f917"
 
 NEWLINE = "\n"
 WELCOME_MESSAGE = f"{HI_HAND} Welcome to PolySignAI, a Telegram Bot to perform spoken-to-sign, sign-to-spoken and sign-to-sign translations in the following languages:\n{NEWLINE.join(list(LANGUAGE_DICT.keys()))}\n\n"\
     f"Use the command /help to see all details about available Bot commands.\n\n"\
-    f"Thank you for choosing us {HEART_EMOJI}"
+    f"Come find us on [GitHub](https://github.com/The-UI-Foodies) {HUGGING_FACE_EMOJI}\n\n"\
+    f"Made with {HEART_EMOJI} by [Daniele](https://github.com/dansolombrino), [Emanuele](https://github.com/emavola), [Ilaria](https://github.com/iladesio) and [Paolo](https://github.com/ppbevilacqua)"
