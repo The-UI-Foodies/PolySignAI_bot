@@ -368,8 +368,8 @@ def sign_to_text(video_path, src_lang, target_lang) -> str:
     return translation.text
 
 async def sign_to_sign(update: Update, video_path, src_lang, target_lang) -> BufferedReader:
-    text = sign_to_text(video_path, src_lang, f"Italian {ITALIAN_FLAG_EMOJI}")
-    video = await text_to_sign(update, text, f"Italian {ITALIAN_FLAG_EMOJI}", target_lang)
+    text = sign_to_text(video_path, src_lang, list(LANGUAGE_DICT.keys())[0])
+    video = await text_to_sign(update, text, list(LANGUAGE_DICT.keys())[0], target_lang)
     return video
 
 
@@ -380,10 +380,17 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
 
     # Error handling
     if is_signed(src) and is_signed(dst):
-        await update.message.reply_text(
-            MSG_SHOULD_BE_VIDEO_ERROR.format(src), 
-            reply_to_message_id=msg_id
-        )
+
+        video = await text_to_sign(update, update.message.text, SIGNED_TO_SPOKEN[src],  dst)
+        if video == None:
+            return
+        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
+
+        # await update.message.reply_text(
+        #     MSG_SHOULD_BE_VIDEO_ERROR.format(src), 
+        #     reply_to_message_id=msg_id
+        # )
+        
         return
     
     # No errors detected
@@ -414,10 +421,10 @@ async def video_translation_entry_point(update: Update, context: ContextTypes.DE
     # Error handling
     if (not is_signed(src)) and (not is_signed(dst)):
         await update.message.reply_text(
-            MSG_SHOULD_BE_TEXT_ERROR.format(src), 
+            MSG_SHOULD_BE_TEXT_WARN.format(src, SPOKEN_TO_SIGNED[src]), 
             reply_to_message_id=msg_id
         )
-        return
+        src = SPOKEN_TO_SIGNED[src]
 
     # No errors detected
     file_info = await update.message.video_note.get_file()
@@ -446,10 +453,11 @@ async def audio_translation_entry_point(update: Update, context: ContextTypes.DE
     # Error handling
     if is_signed(src) and is_signed(dst):
         await update.message.reply_text(
-            MSG_SHOULD_BE_VIDEO_ERROR.format(src), 
+            MSG_SHOULD_BE_VIDEO_WARN.format(src, SIGNED_TO_SPOKEN[src]), 
             reply_to_message_id=msg_id
         )
-        return
+
+        src = SIGNED_TO_SPOKEN[src]
     
     # No errors detected
     file_info = await update.message.voice.get_file()

@@ -39,9 +39,10 @@ MSG_SET_LANG = f"{GENIE_EMOJI} Please select a source (left) and destination (ri
 MSG_LANG_SET = OK_EMOJI + "\nFrom now on, the bot will translate from {0} to {1}"
 
 ERROR_EMOJI = "\u274C"
+WARN_EMOJI = "\u26A0\uFE0F"
 
-MSG_SHOULD_BE_VIDEO_ERROR = ERROR_EMOJI + " Selected {0} source language requires to translate from a video!"
-MSG_SHOULD_BE_TEXT_ERROR = ERROR_EMOJI + " Selected {0} source language requires to translate from an audio or a text!"
+MSG_SHOULD_BE_VIDEO_WARN = WARN_EMOJI + " Selected {0} source language requires to translate from a video!\nAssuming you want to translate from {1}"
+MSG_SHOULD_BE_TEXT_WARN = WARN_EMOJI + " Selected {0} source language requires to translate from an audio or a text!\nAssuming you want to translate from {1}"
 
 OPS_EMOJI = "\U0001f92d"
 NOT_AVAILABLE_EMOJI = "\U0001f636\u200D\U0001f32b\uFE0F"
@@ -100,10 +101,10 @@ KEYBOARD_LANG_LIST = [
     {"text": f"German {GERMAN_FLAG_EMOJI}{SPEAK_EMOJI}", "is_spoken": True},
     {"text": f"Spanish {SPANISH_FLAG_EMOJI}{SPEAK_EMOJI}", "is_spoken": True},
     {"text": f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
-    {"text": f"British Sign Lang{ENGLISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
+    {"text": f"French Sign Lang{FRENCH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
     {"text": f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
     {"text": f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
-    {"text": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}", "is_spoken": False},
 ]
 
 LANGUAGE_DICT = {
@@ -113,10 +114,10 @@ LANGUAGE_DICT = {
     f"German {GERMAN_FLAG_EMOJI}{SPEAK_EMOJI}": "de",
     f"Spanish {SPANISH_FLAG_EMOJI}{SPEAK_EMOJI}": "es",
     f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "ise", # This "language code" is used by sign.mt API
-    f"British Sign Lang{ENGLISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "bfi",
+    f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "bfi",
+    f"French Sign Lang{FRENCH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "fsl",
     f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "gsg",
     f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "ssp",
-    f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}": "ase",
 }
 
 LANGUAGE_DICT_REVERSED = {
@@ -126,11 +127,22 @@ LANGUAGE_DICT_REVERSED = {
     "de": f"German {GERMAN_FLAG_EMOJI}{SPEAK_EMOJI}",
     "es": f"Spanish {SPANISH_FLAG_EMOJI}{SPEAK_EMOJI}",
     "ise": f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
-    "bfi": f"British Sign Lang{ENGLISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    "ase": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    "fsl": f"French Sign Lang{FRENCH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
     "gsg": f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
     "ssp": f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
-    "ase": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
 }
+
+SPOKEN_TO_SIGNED = {
+    f"Italian {ITALIAN_FLAG_EMOJI}{SPEAK_EMOJI}": f"Italian Sign Lang{ITALIAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    f"English {ENGLISH_FLAG_EMOJI}{SPEAK_EMOJI}": f"American Sign Lang{US_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    f"French {FRENCH_FLAG_EMOJI}{SPEAK_EMOJI}": f"French Sign Lang{FRENCH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    f"German {GERMAN_FLAG_EMOJI}{SPEAK_EMOJI}": f"German Sign Lang{GERMAN_FLAG_EMOJI}{OPEN_HANDS_EMOJI}",
+    f"Spanish {SPANISH_FLAG_EMOJI}{SPEAK_EMOJI}": f"Spanish Sign Lang{SPANISH_FLAG_EMOJI}{OPEN_HANDS_EMOJI}"
+}
+
+SIGNED_TO_SPOKEN = {v: k for k, v in SPOKEN_TO_SIGNED.items()}
+
 
 SUPPORTED_LANGUAGES_ISO_CODES = list(LANGUAGE_DICT_REVERSED.keys())
 SUPPORTED_LANGUAGES_ISO_NAME = list(LANGUAGE_DICT.keys())[:5] # showing only spoken languages, NOT signed ones
