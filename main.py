@@ -381,17 +381,12 @@ async def text_translation_entry_point(update: Update, context: ContextTypes.DEF
     # Error handling
     if is_signed(src) and is_signed(dst):
 
-        video = await text_to_sign(update, update.message.text, SIGNED_TO_SPOKEN[src],  dst)
-        if video == None:
-            return
-        await update.message.reply_video(video=video, supports_streaming=True, reply_to_message_id=msg_id)
-
-        # await update.message.reply_text(
-        #     MSG_SHOULD_BE_VIDEO_ERROR.format(src), 
-        #     reply_to_message_id=msg_id
-        # )
+        await update.message.reply_text(
+            MSG_SHOULD_BE_VIDEO_WARN.format(src, SIGNED_TO_SPOKEN[src]), 
+            reply_to_message_id=msg_id
+        )
         
-        return
+        src = SIGNED_TO_SPOKEN[src]
     
     # No errors detected
     if not is_signed(src) and not is_signed(dst):
