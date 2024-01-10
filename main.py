@@ -26,7 +26,7 @@ from rich import print
 import iso639
 
 def _get_current_timestamp():
-    return datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+    return datetime.now().strftime(DATE_FORMAT)
 
 load_dotenv()
 
@@ -39,7 +39,7 @@ translator = deepl.Translator(DEEPL_TOKEN)
 
 # Enable logging
 logging.basicConfig(
-    format="[%(name)s @ %(asctime)s] %(message)s", level=logging.INFO, datefmt='%d/%m/%Y %H:%M:%S'
+    format="[%(name)s @ %(asctime)s] %(message)s", level=logging.INFO, datefmt=DATE_FORMAT
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)

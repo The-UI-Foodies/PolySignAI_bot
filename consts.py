@@ -2,6 +2,8 @@ import iso639
 
 # TODO update it with our command!
 
+DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
+
 REQUIRED_DIRS = ["poses", "voice", "video"]
 
 HELP_MESSAGE = """
