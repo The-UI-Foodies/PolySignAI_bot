@@ -6,32 +6,6 @@ DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
 
 REQUIRED_DIRS = ["poses", "voice", "video"]
 
-HELP_MESSAGE = """
-This bot can translate text, audio, and video between multiple signed and spolen languages!
-
-*Available commands:*
-
-- /start - Start the bot
-- /help - Get help using the bot
-- /src - Set the source language
-- /dst - Set the destination language
-- /lang_src - Print the selected source language
-- /lang_dst - Print the selected destination language
-- /swap - Swap the source and destination languages
-
-*Usage:*
-
-- To translate text, simply send the text you want to translate as a message.
-- To translate audio, send an audio message.
-- To translate video, send a video message.
-
-*Examples:*
-
-- To translate "Hello, world!" from English to Italian, type "Ciao, mondo!"
-- To translate an audio recording of a speech from French to Spanish, send the audio message.
-- To translate a video of a lecture from German to Chinese, send the video message.
-"""
-
 OK_EMOJI = "\u2705"
 GENIE_EMOJI = "\U0001f9de\u200D\u2642\uFE0F"
 
@@ -183,7 +157,42 @@ HEART_EMOJI = "\U0001f9e1"
 HUGGING_FACE_EMOJI = "\U0001f917"
 
 NEWLINE = "\n"
+
+COOL_EMOJI = "\U0001f60e"
+
 WELCOME_MESSAGE = f"{HI_HAND} Welcome to PolySignAI, a Telegram Bot to perform spoken-to-sign, sign-to-spoken and sign-to-sign translations in the following languages:\n{NEWLINE.join(list(LANGUAGE_DICT.keys()))}\n\n"\
     f"Use the command /help to see all details about available Bot commands.\n\n"\
     f"Come find us on [GitHub](https://github.com/The-UI-Foodies) {HUGGING_FACE_EMOJI}\n\n"\
-    f"Made with {HEART_EMOJI} by [Daniele](https://github.com/dansolombrino), [Emanuele](https://github.com/emavola), [Ilaria](https://github.com/iladesio) and [Paolo](https://github.com/ppbevilacqua)"
+    f"Made with {HEART_EMOJI} by [Daniele](https://github.com/dansolombrino), [Emanuele](https://github.com/emavola), [Ilaria](https://github.com/iladesio) and [Paolo](https://github.com/ppbevilacqua)\n\n"\
+    f"Powered by [Sign Translate](https://github.com/sign/translate)"
+
+HELP_MESSAGE = f"""
+{HI_HAND} Welcome to PolySignAI, a Telegram Bot to perform spoken-to-sign, sign-to-spoken and sign-to-sign translations
+
+*Available commands:*
+
+- /start - Starts the bot 
+- /help - Gets help using the bot 
+- /lang - Sets source and destination languages 
+- /swap - Swaps the source and destination languages 
+
+*Usage:*
+
+Set desired source and destination languages and *simply message* the bot to translate your messages!
+
+If you select {list(LANGUAGE_DICT.keys())[2]} and send a message in {list(LANGUAGE_DICT.keys())[3]} PolySignAI will still be able to perform the translation! {COOL_EMOJI}
+
+- To translate from a spoken language, simply send a text or an audio message.
+
+- To translate from a signed language, simply send a video.
+
+If you set a spoken source language, like {list(LANGUAGE_DICT.keys())[4]}, but you send a video, PolySignAI will assume you want to translate from the *corresponding* signed language {list(LANGUAGE_DICT.keys())[9]}
+
+If you set a signed source language, like {list(LANGUAGE_DICT.keys())[7]}, but you send a video, PolySignAI will assume you want to translate from the *corresponding* spoken language {list(LANGUAGE_DICT.keys())[2]}
+
+*Examples:*
+
+- To translate "Hello, world!" from {list(LANGUAGE_DICT.keys())[1]} to {list(LANGUAGE_DICT.keys())[0]}, simply type "Ciao, mondo!" or record a voice message saying it.
+
+- To translate from any supported signed language, simply send a video where you sign in sign language
+"""
