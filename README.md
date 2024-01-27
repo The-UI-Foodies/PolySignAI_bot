@@ -1,2 +1,4 @@
 # PolySignAI
-A Telegram Bot to perform spoken-to-sign, sign-to-spoken and sign-to-sign translations in the following languages
+A Telegram Bot to perform Multi-modal Sign Language translations : Text/audio-to-text, Text/audio-to-sign, Sign-to-text, Sign-to-Sign in the following languages 🇮🇹🇬🇧🇫🇷🇩🇪🇪🇸
+
+![Alt text](Screen.png)
